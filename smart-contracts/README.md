@@ -1,13 +1,31 @@
 # Smart Contracts — LPFY Markets
 
-Hardhat workspace for the LPFY Markets protocol contracts. This package contains the Solidity development environment, network configuration, shared path helpers, and dependency setup used by the protocol.
+Solidity contracts for the pair-based liquidity layer used by LPFY Markets. The package is built with Hardhat and introduces ERC-4626 vaults together with pair configuration, borrow-rate configuration, and lender APY configuration.
 
-## Technology
+## Core contracts
 
-- Solidity `0.8.24`
-- Hardhat
-- OpenZeppelin Contracts
-- dotenv-based network configuration
+| Contract | Purpose |
+|---|---|
+| `PairVault` | ERC-4626 vault that holds the debt asset for a single market pair and accounts for assets deployed by the market. |
+| `PairVaultFactory` | Deploys one `PairVault` per pair identifier and registers it with the market registry. |
+| `BorrowRateConfig` | Stores owner-configured borrow APR values and pair support flags. |
+| `StaticApySource` | Provides a configurable lender APY per market with a default fallback value. |
+| `MarketsConfig` | Shared market constants and protocol defaults. |
+| `PairId` | Produces deterministic identifiers for token pairs. |
+
+## PairVault model
+
+`PairVault` follows ERC-4626 for lender shares. Idle assets remain inside the vault, while market accounting can be included in `totalAssets()` through `IMarketVaultAccounting`.
+
+```text
+totalAssets = idle vault balance + assets owed by the market
+```
+
+Liquidity movement is restricted to the configured market:
+
+- `pullLiquidity` transfers idle assets from the vault to the market-selected recipient.
+- `pushLiquidity` returns assets from the market to the vault.
+- `maxWithdraw` and `maxRedeem` are limited by currently idle liquidity.
 
 ## Setup
 
@@ -18,19 +36,20 @@ npm ci
 npm run compile
 ```
 
-Configure the required RPC endpoints and deployment credentials in `.env` using `.env.example` as the reference.
+Configure RPC endpoints and deployment credentials in `.env` using `.env.example` as the reference.
 
 ## Project structure
 
 ```text
-smart-contracts/
-├── config/
-│   ├── paths.js          # Shared repository paths
-│   └── rpc.js            # RPC configuration
-├── contracts/            # Solidity sources
-├── hardhat.config.js     # Hardhat compiler and network configuration
-├── package.json
-└── .env.example
+contracts/
+└── markets/
+    ├── PairVault.sol
+    ├── PairVaultFactory.sol
+    ├── BorrowRateConfig.sol
+    ├── StaticApySource.sol
+    ├── MarketsConfig.sol
+    ├── interfaces/
+    └── libraries/
 ```
 
 ## Commands
