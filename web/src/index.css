@@ -1,0 +1,108 @@
+:root {
+	--bg: #f3f6fb;
+	--surface: #ffffff;
+	--ink: #0f172a;
+	--muted: #64748b;
+	--line: #e2e8f0;
+	--blue: #2563eb;
+	--blue-2: #eff6ff;
+	--ok: #0284c7;
+	--danger: #dc2626;
+	--shadow: 0 1px 2px rgba(15, 23, 42, 0.05),
+		0 16px 40px rgba(15, 23, 42, 0.08);
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+	margin: 0;
+	min-height: 100%;
+}
+
+body {
+	color: var(--ink);
+	font-family: Inter, system-ui, sans-serif;
+	background: var(--bg);
+}
+
+button,
+input,
+select {
+	font-family: inherit;
+}
+
+.app {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.app-header {
+	background: rgba(255, 255, 255, 0.92);
+	border-bottom: 1px solid var(--line);
+	color: var(--ink);
+	padding: 14px 18px;
+	backdrop-filter: blur(16px);
+	position: sticky;
+	top: 0;
+	z-index: 20;
+}
+
+.app-header-inner {
+	max-width: min(1440px, 100%);
+	margin: 0 auto;
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	flex-wrap: nowrap;
+}
+
+.app-header .brand .brand-lockup-name {
+	height: 22px;
+}
+
+.app-header .tabs {
+	flex-direction: row;
+	flex: 1;
+	gap: 4px;
+	flex-wrap: nowrap;
+}
+
+.app-header .tab {
+	color: var(--muted);
+	padding: 10px 14px;
+}
+
+.app-header .tab:hover {
+	background: var(--bg);
+	color: var(--ink);
+}
+
+.app-header .tab.active {
+	background: var(--blue-2);
+	color: var(--blue);
+}
+
+.header-controls {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-left: auto;
+}
+
+.app-header .net-select {
+	padding: 0;
+	color: var(--muted);
+}
+
+.app-header .net-select select,
+.app-header .pill,
+.app-header .btn.ghost {
+	background: #fff;
+	color: var(--ink);
+	border-color: var(--line);
+}
