@@ -20,7 +20,7 @@ contract ValuationOracle is IValuationOracle, Ownable {
     uint16 public maxPoolDeviationBps; // 0 by default (enable on mainnet, e.g. 500–1000)
 
     mapping(address => AggregatorV3Interface) public feeds;
-    /// @notice Per-token heartbeat override. 0 = use `maxPriceAge`. Stables on Base often need 24h.
+    /// @notice Per-token heartbeat override. 0 = use `maxPriceAge`. Stablecoin feeds often need 24h.
     mapping(address => uint256) public tokenMaxPriceAge;
     mapping(LendingTypes.ProtocolVersion => IPositionAdapter) public adapters;
 

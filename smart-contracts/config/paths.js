@@ -8,16 +8,14 @@ const SMART_CONTRACTS_ROOT = path.join(__dirname, "..");
 const REPO_ROOT = path.join(SMART_CONTRACTS_ROOT, "..");
 
 module.exports = {
-    SMART_CONTRACTS_ROOT,
-    REPO_ROOT,
-    deploymentsDir: path.join(SMART_CONTRACTS_ROOT, "deployments"),
-    deploymentFile: (name) =>
-        path.join(SMART_CONTRACTS_ROOT, "deployments", name),
-    frontendRoot: path.join(REPO_ROOT, "web"),
-    frontendEnv: path.join(REPO_ROOT, "web", ".env"),
-    frontendLib: (...parts) =>
-        path.join(REPO_ROOT, "web", "src", "lib", ...parts),
-    creRoot: path.join(REPO_ROOT, "cre"),
-    creKeeperConfig: (file) =>
-        path.join(REPO_ROOT, "cre", "liquidation-keeper", file),
+  SMART_CONTRACTS_ROOT,
+  REPO_ROOT,
+  deploymentsDir: path.join(SMART_CONTRACTS_ROOT, "deployments"),
+  deploymentFile: (name) => path.join(SMART_CONTRACTS_ROOT, "deployments", name),
+  webRoot: path.join(REPO_ROOT, "web"),
+  webEnv: path.join(REPO_ROOT, "web", ".env"),
+  webLib: (...parts) => path.join(REPO_ROOT, "web", "src", "lib", ...parts),
+  creRoot: path.join(REPO_ROOT, "cre"),
+  creKeeperConfig: (file) =>
+    path.join(REPO_ROOT, "cre", "liquidation-keeper", file),
 };

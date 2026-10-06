@@ -6,19 +6,19 @@ Debt asset on Sepolia markets: **Circle USDC** (6 decimals).
 
 Idle lender cash lives in per-pair **ERC-4626 `PairVault`s** — not on the market contract.
 
-| Contract                             | Role                                                                                                          |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| `markets/PairVault.sol`              | **ERC-4626** idle USDC vault per pair; `deposit` / `redeem`; `totalAssets` includes owed principal + interest |
-| `markets/MarketLendingModule.sol`    | Loans, LTV, `pullLiquidity` / `pushLiquidity`, liquidate; **`feeTo`** + **`liquidationFeeBps`**               |
-| `markets/BorrowRateConfig.sol`       | Per-pair borrow APR                                                                                           |
-| `markets/StaticApySource.sol`        | Lender display APY (UI only)                                                                                  |
-| `markets/CreLiquidationReceiver.sol` | CRE `onReport` → `liquidate`                                                                                  |
-| `ValuationOracle.sol`                | DEX LP amounts × Chainlink USD                                                                                |
-| `adapters/V3Adapter.sol`             | Custody DEX V3 LP NFTs                                                                                        |
-| `adapters/V4Adapter.sol`             | Custody DEX V4 LP NFTs                                                                                        |
-| `interfaces/`                        | Adapter, oracle, DEXLP, Chainlink                                                                             |
-| `libraries/`                         | PoolId, TickMath, LiquidityAmounts, FullMath, types                                                           |
-| `mocks/`                             | Hardhat / unit tests only                                                                                     |
+| Contract | Role |
+| -------- | ---- |
+| `markets/PairVault.sol` | **ERC-4626** idle USDC vault per pair; `deposit` / `redeem`; `totalAssets` includes owed principal + interest |
+| `markets/MarketLendingModule.sol` | Loans, LTV, `pullLiquidity` / `pushLiquidity`, liquidate; **`feeTo`** + **`liquidationFeeBps`** |
+| `markets/BorrowRateConfig.sol` | Per-pair borrow APR |
+| `markets/StaticApySource.sol` | Lender display APY (UI only) |
+| `markets/CreLiquidationReceiver.sol` | CRE `onReport` → `liquidate` |
+| `ValuationOracle.sol` | DEX LP amounts × Chainlink USD |
+| `adapters/V3Adapter.sol` | Custody DEX V3 LP NFTs |
+| `adapters/V4Adapter.sol` | Custody DEX V4 LP NFTs |
+| `interfaces/` | Adapter, oracle, DEXLP, Chainlink |
+| `libraries/` | PoolId, TickMath, LiquidityAmounts, FullMath, types |
+| `mocks/` | Hardhat / unit tests only |
 
 ## Custody
 

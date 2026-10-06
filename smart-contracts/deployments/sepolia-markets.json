@@ -1,0 +1,88 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "deployer": "0x8f166e0215C21Bd9A650fecd91C9FBc3CFcbc4ae",
+  "deployedAt": "2026-10-06T11:53:48.880Z",
+  "note": "Fresh Circle USDC + ERC-4626 PairVaults stack. All LPFY contracts newly deployed.",
+  "contracts": {
+    "marketLendingModule": "0x658A244Ad0c51F0C49d1fF79678bc642365b6E65",
+    "borrowRateConfig": "0xb2e0c7b38b7DECE87A4E3D41A465F0175Ff65d25",
+    "staticApySource": "0x2b0B69EB316BCBaCc7167Dc1764637a7eBD296C2",
+    "oracle": "0xA659A2C34c5E9026f7777AF654d0F742f8444f7F",
+    "v3Adapter": "0x8Aafb1e3941E9b5f6b947e6213ab6Bf397845768",
+    "v4Adapter": "0x33234ac1508034A9494baa3d82D055a6b1ae92Bd",
+    "creLiquidationReceiver": "0xc9682A8649B7587e43a9cb85068d23081C5397F7",
+    "debtAsset": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "debtAssetDecimals": 6,
+    "debtAssetSymbol": "USDC",
+    "pairVaults": {
+      "0x82995a7c2ee0a46f82c3c841a92f4b4ef42e49cfab7ca6d6dcd6aa694cf64db4": "0x9478AD78af6C7758ADf8Aa78C2cc5ADEd5990843",
+      "0xb6eb962ee4494c3528e1c150e0d32b2efca3838f2ecbfbd226e637b3208b7541": "0xCE934C71ed024Da403fB68EC4C9e26C996d7E7ca",
+      "0x264c622573cd31c6ddc5fb84a05d69ea65648547fda5ccd6d5a859e47bb1af4e": "0xab30B8fEBEAdf0B2094Db087Df3CA4E632e27Ca0"
+    }
+  },
+  "external": {
+    "uniswapV3Npm": "0x1238536071E1c677A632429e3655c799b22cDA52",
+    "factory": "0x0227628f3F023bb0B980b67D528571c95c6DaC1c",
+    "weth": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+    "circleUsdc": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "usdt": "0xE699A7254f05f93a539120BA640bf2D1C87b48f1",
+    "wbtc": "0x65bBDdD937C4CE8aCf308c0787b857664616BC2c",
+    "ethUsd": "0x694AA1769357215DE4FAC081bf1f309aDC325306",
+    "usdcUsd": "0xA2F78ab2355fe2f984D808B5CeE7FD0A93D5270E",
+    "btcUsd": "0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43",
+    "v4Npm": "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
+    "v4StateView": "0xE1Dd9c3fA50EDB962E442f60DfBc432e24537E4C",
+    "swapRouter02": "0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E",
+    "swapRouter02Live": "0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E",
+    "creForwarder": "0x15fC6ae953E024d975e77382eEeC56A9101f9F88"
+  },
+  "risk": {
+    "defaultLtvBps": 5000,
+    "defaultLiquidationThresholdBps": 6500,
+    "liquidationFeeBps": 1000,
+    "feeTo": "0x3e62782ecB22923423462B37ec67f9Dc718f61cb"
+  },
+  "pairsEnabled": [
+    {
+      "a": "USDC",
+      "b": "WETH",
+      "aprBps": 600,
+      "lenderApyBps": 500,
+      "pairId": "0x82995a7c2ee0a46f82c3c841a92f4b4ef42e49cfab7ca6d6dcd6aa694cf64db4",
+      "vault": "0x9478AD78af6C7758ADf8Aa78C2cc5ADEd5990843"
+    },
+    {
+      "a": "USDC",
+      "b": "USDT",
+      "aprBps": 500,
+      "lenderApyBps": 400,
+      "pairId": "0xb6eb962ee4494c3528e1c150e0d32b2efca3838f2ecbfbd226e637b3208b7541",
+      "vault": "0xCE934C71ed024Da403fB68EC4C9e26C996d7E7ca"
+    },
+    {
+      "a": "USDC",
+      "b": "WBTC",
+      "aprBps": 650,
+      "lenderApyBps": 550,
+      "pairId": "0x264c622573cd31c6ddc5fb84a05d69ea65648547fda5ccd6d5a859e47bb1af4e",
+      "vault": "0xab30B8fEBEAdf0B2094Db087Df3CA4E632e27Ca0"
+    }
+  ],
+  "webEnv": {
+    "VITE_NETWORK": "sepolia",
+    "VITE_SEPOLIA_MARKET_MODULE": "0x658A244Ad0c51F0C49d1fF79678bc642365b6E65",
+    "VITE_SEPOLIA_ORACLE": "0xA659A2C34c5E9026f7777AF654d0F742f8444f7F",
+    "VITE_SEPOLIA_V3_ADAPTER": "0x8Aafb1e3941E9b5f6b947e6213ab6Bf397845768",
+    "VITE_SEPOLIA_V4_ADAPTER": "0x33234ac1508034A9494baa3d82D055a6b1ae92Bd",
+    "VITE_SEPOLIA_USDC": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "VITE_SEPOLIA_BORROW_RATES": "0xb2e0c7b38b7DECE87A4E3D41A465F0175Ff65d25",
+    "VITE_SEPOLIA_APY_SOURCE": "0x2b0B69EB316BCBaCc7167Dc1764637a7eBD296C2",
+    "VITE_SEPOLIA_USDT": "0xE699A7254f05f93a539120BA640bf2D1C87b48f1",
+    "VITE_SEPOLIA_WBTC": "0x65bBDdD937C4CE8aCf308c0787b857664616BC2c",
+    "VITE_SEPOLIA_CRE_RECEIVER": "0xc9682A8649B7587e43a9cb85068d23081C5397F7",
+    "VITE_SEPOLIA_VAULT_USDC_WETH": "0x9478AD78af6C7758ADf8Aa78C2cc5ADEd5990843",
+    "VITE_SEPOLIA_VAULT_USDC_USDT": "0xCE934C71ed024Da403fB68EC4C9e26C996d7E7ca",
+    "VITE_SEPOLIA_VAULT_USDC_WBTC": "0xab30B8fEBEAdf0B2094Db087Df3CA4E632e27Ca0"
+  }
+}
