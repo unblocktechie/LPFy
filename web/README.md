@@ -1,24 +1,29 @@
 # Web — LPFY Markets
 
-React + Vite application shell for LPFY Markets. The web provides wallet connectivity, network awareness, shared transaction state, project branding, and the base layout used by the protocol interface.
+React + Vite interface for LPFY Markets with wallet/network integration and live pool-liquidity data from the lending contracts.
 
 ## Technology
 
-- React 18
-- TypeScript
+- React 18 + TypeScript
 - Vite
 - wagmi + viem
 - TanStack Query
 - React Router
 
-## Features
+## Pool liquidity
 
-- Wallet connection and disconnection through wagmi connectors
-- Active-chain detection and network switching
-- Shared network and RPC configuration
-- Transaction context and loading states
-- Responsive LPFY application shell and visual assets
-- Netlify SPA configuration
+The Markets view reads protocol liquidity directly from `MarketLendingModule` for the configured market pairs. It displays:
+
+- total available borrowing liquidity
+- pool cash balance
+- utilization
+- aggregated values across configured pairs
+
+Contract reads are performed with wagmi using the ABI definitions in `src/abi.ts` and market configuration from the active network context.
+
+## Wallet and network support
+
+The application provides wallet connection, active-chain detection, network switching, shared transaction state, and RPC configuration through the common application shell.
 
 ## Run locally
 
@@ -29,36 +34,30 @@ npm ci
 npm run dev
 ```
 
-Vite serves the application at `http://localhost:5173` by default.
+Open `http://localhost:5173` and connect a wallet to the configured network.
 
 ## Environment
 
-Web configuration is read from `web/.env`. Start from `.env.example` and provide the RPC endpoints and deployed contract addresses for the selected network.
+Set the network RPC and deployed protocol addresses in `web/.env`. Use `.env.example` as the reference.
 
 ```env
 VITE_NETWORK=sepolia
 VITE_SEPOLIA_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
 VITE_SEPOLIA_MARKET_MODULE=
-VITE_SEPOLIA_ORACLE=
-VITE_SEPOLIA_V3_ADAPTER=
-VITE_SEPOLIA_V4_ADAPTER=
 VITE_SEPOLIA_USDC=
 ```
-
-Restart the Vite development server after changing environment variables.
 
 ## Source layout
 
 ```text
 src/
-├── App.tsx
-├── main.tsx
+├── abi.ts
 ├── layout/AppShell.tsx
+├── features/pool/PoolLiquidity.tsx
 ├── providers/NetworkProvider.tsx
 ├── hooks/tx.tsx
-├── lib/                  # Network, RPC, formatting and shared configuration
-├── components/           # Shared UI components
-└── assets/               # LPFY visual assets
+├── lib/
+└── components/
 ```
 
 ## Build
@@ -68,4 +67,4 @@ npm run build
 npm run preview
 ```
 
-Deployment settings for Netlify are defined in `netlify.toml`.
+Netlify deployment settings are defined in `netlify.toml`.
