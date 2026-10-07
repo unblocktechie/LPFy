@@ -1,0 +1,1110 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>LPFY Markets — Smart Contract Architecture</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+			rel="stylesheet"
+		/>
+		<script type="module">
+			import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+			mermaid.initialize({
+				startOnLoad: true,
+				theme: 'base',
+				themeVariables: {
+					primaryColor: '#dceee6',
+					primaryTextColor: '#0f1f1a',
+					primaryBorderColor: '#1f6b52',
+					lineColor: '#3d5a50',
+					secondaryColor: '#eef3f0',
+					tertiaryColor: '#f7faf8',
+					fontFamily: 'IBM Plex Sans, Segoe UI, sans-serif',
+					actorBkg: '#dceee6',
+					actorBorder: '#1f6b52',
+					actorTextColor: '#0f1f1a',
+					signalColor: '#3d5a50',
+					signalTextColor: '#13201b',
+					noteBkgColor: '#f5e8d0',
+					noteTextColor: '#8a5a12',
+				},
+				flowchart: { curve: 'basis', padding: 14, useMaxWidth: true },
+				sequence: { actorMargin: 28, messageMargin: 30, useMaxWidth: true },
+			});
+		</script>
+		<style>
+			:root {
+				--bg: #f3f7f5;
+				--surface: #ffffff;
+				--ink: #12201a;
+				--muted: #5a6b63;
+				--line: #d4e0d9;
+				--accent: #1f6b52;
+				--accent-soft: #dceee6;
+				--vault: #2a5f8f;
+				--vault-soft: #e4eef7;
+				--fee: #7a3e6d;
+				--fee-soft: #f3e6ef;
+				--ext: #2a4d6e;
+				--ext-soft: #e7eef5;
+				--warn: #8a5a12;
+				--warn-soft: #f5e8d0;
+				--code: #0e2a22;
+				--shadow: 0 12px 32px rgba(18, 32, 26, 0.07);
+				--radius: 14px;
+				--mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+				--sans: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			html {
+				scroll-behavior: smooth;
+			}
+			html,
+			body {
+				margin: 0;
+				overflow-x: hidden;
+				max-width: 100%;
+			}
+			body {
+				font-family: var(--sans);
+				color: var(--ink);
+				background:
+					radial-gradient(
+						1100px 480px at 0% -8%,
+						#dceee6 0%,
+						transparent 52%
+					),
+					radial-gradient(
+						900px 400px at 100% 0%,
+						#e4eef7 0%,
+						transparent 48%
+					),
+					var(--bg);
+				line-height: 1.55;
+			}
+			a {
+				color: var(--accent);
+			}
+			.wrap {
+				max-width: 1040px;
+				width: 100%;
+				margin: 0 auto;
+				padding: 28px 18px 72px;
+			}
+			header.hero {
+				padding: 8px 0 24px;
+				border-bottom: 1px solid var(--line);
+				margin-bottom: 28px;
+			}
+			.pills {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px;
+				margin-bottom: 14px;
+			}
+			.pill {
+				font-size: 11px;
+				font-weight: 600;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				padding: 5px 10px;
+				border-radius: 999px;
+				border: 1px solid var(--line);
+				background: var(--surface);
+			}
+			.pill.ok {
+				background: var(--accent-soft);
+				color: var(--accent);
+				border-color: #b8d9cb;
+			}
+			.pill.vault {
+				background: var(--vault-soft);
+				color: var(--vault);
+				border-color: #b8cfe4;
+			}
+			.pill.fee {
+				background: var(--fee-soft);
+				color: var(--fee);
+				border-color: #e0c4d6;
+			}
+			.brand {
+				font-size: 13px;
+				letter-spacing: 0.12em;
+				text-transform: uppercase;
+				color: var(--accent);
+				font-weight: 600;
+				margin: 0 0 8px;
+			}
+			h1 {
+				font-size: clamp(1.75rem, 3.2vw, 2.35rem);
+				margin: 0 0 12px;
+				letter-spacing: -0.02em;
+				line-height: 1.15;
+			}
+			.lede {
+				color: var(--muted);
+				max-width: 70ch;
+				margin: 0;
+				font-size: 1.05rem;
+			}
+			nav.toc {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px;
+				margin: 22px 0 0;
+			}
+			nav.toc a {
+				text-decoration: none;
+				background: var(--surface);
+				border: 1px solid var(--line);
+				padding: 7px 12px;
+				border-radius: 999px;
+				font-size: 13px;
+				color: var(--ink);
+			}
+			nav.toc a:hover {
+				border-color: var(--accent);
+				color: var(--accent);
+			}
+			section {
+				margin: 40px 0;
+				scroll-margin-top: 18px;
+			}
+			h2 {
+				font-size: 1.35rem;
+				margin: 0 0 10px;
+				letter-spacing: -0.01em;
+			}
+			h3 {
+				font-size: 1.05rem;
+				margin: 0 0 8px;
+			}
+			p {
+				margin: 0 0 12px;
+			}
+			.card {
+				background: var(--surface);
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				box-shadow: var(--shadow);
+				padding: 18px 20px;
+				margin-bottom: 14px;
+				min-width: 0;
+				overflow: hidden;
+			}
+			.diagram {
+				background: var(--surface);
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				padding: 18px 14px;
+				overflow-x: auto;
+				margin: 14px 0 8px;
+				box-shadow: var(--shadow);
+			}
+			.diagram .mermaid {
+				display: flex;
+				justify-content: center;
+			}
+			.caption {
+				font-size: 13px;
+				color: var(--muted);
+				margin: 0 0 22px;
+			}
+			.grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+				gap: 14px;
+			}
+			.two-col {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 14px;
+			}
+			@media (max-width: 800px) {
+				.two-col {
+					grid-template-columns: 1fr;
+				}
+			}
+			.tag {
+				display: inline-block;
+				font-size: 11px;
+				font-weight: 600;
+				letter-spacing: 0.04em;
+				text-transform: uppercase;
+				padding: 3px 8px;
+				border-radius: 6px;
+				background: var(--accent-soft);
+				color: var(--accent);
+				margin-right: 6px;
+			}
+			.tag.vault {
+				background: var(--vault-soft);
+				color: var(--vault);
+			}
+			.tag.fee {
+				background: var(--fee-soft);
+				color: var(--fee);
+			}
+			.tag.ext {
+				background: var(--ext-soft);
+				color: var(--ext);
+			}
+			.tag.warn {
+				background: var(--warn-soft);
+				color: var(--warn);
+			}
+			.addr {
+				font-family: var(--mono);
+				font-size: 12px;
+				background: #f0f5f2;
+				padding: 6px 8px;
+				border-radius: 8px;
+				word-break: break-all;
+				margin: 8px 0 0;
+				color: var(--code);
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				font-size: 14px;
+			}
+			th,
+			td {
+				text-align: left;
+				padding: 10px 12px;
+				border-bottom: 1px solid var(--line);
+				vertical-align: top;
+			}
+			th {
+				font-size: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+				color: var(--muted);
+			}
+			code {
+				font-family: var(--mono);
+				font-size: 12.5px;
+				background: #eef4f1;
+				padding: 1px 6px;
+				border-radius: 5px;
+			}
+			ul.fn-list {
+				margin: 8px 0 0;
+				padding-left: 0;
+				list-style: none;
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+			}
+			ul.fn-list li {
+				font-family: var(--mono);
+				font-size: 12px;
+				background: #eef4f1;
+				padding: 4px 8px;
+				border-radius: 6px;
+			}
+			.callout {
+				border-left: 4px solid var(--accent);
+				background: var(--accent-soft);
+				padding: 12px 14px;
+				border-radius: 0 10px 10px 0;
+				margin: 14px 0;
+				font-size: 14px;
+			}
+			.callout.warn {
+				border-left-color: var(--warn);
+				background: var(--warn-soft);
+			}
+			.callout.vault {
+				border-left-color: var(--vault);
+				background: var(--vault-soft);
+			}
+			.path {
+				font-family: var(--mono);
+				font-size: 12.5px;
+				color: var(--muted);
+				margin: 0 0 10px;
+				max-width: 100%;
+				overflow-wrap: anywhere;
+				word-break: break-word;
+			}
+			footer {
+				margin-top: 48px;
+				padding-top: 18px;
+				border-top: 1px solid var(--line);
+				color: var(--muted);
+				font-size: 13px;
+			}
+			@media print {
+				body {
+					background: #fff;
+				}
+				.diagram,
+				.card {
+					box-shadow: none;
+					break-inside: avoid;
+				}
+				nav.toc {
+					display: none;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="wrap">
+			<header class="hero">
+				<div class="pills">
+					<span class="pill ok">Docs v2</span>
+					<span class="pill vault">PairVault</span>
+					<span class="pill fee">feeTo</span>
+					<span class="pill">Architecture</span>
+				</div>
+				<p class="brand">LPFY · Smart contracts</p>
+				<h1>Smart contract architecture</h1>
+				<p class="lede">
+					Contract map for the markets stack: ERC-4626 PairVaults,
+					MarketLendingModule, adapters, oracle, rates, CRE liquidation,
+					and how funds move — with repo references.
+				</p>
+				<nav class="toc">
+					<a href="#overview">Overview</a>
+					<a href="#map">System map</a>
+					<a href="#custody">Custody</a>
+					<a href="#flows">Flows</a>
+					<a href="#contracts">Contracts</a>
+					<a href="#fees">Fees</a>
+					<a href="#external">External</a>
+					<a href="#layout">Repo layout</a>
+					<a href="#deployed">Deployed</a>
+				</nav>
+			</header>
+
+			<!-- Overview -->
+			<section id="overview">
+				<h2>1. Overview</h2>
+				<div class="card">
+					<p style="margin: 0">
+						Lenders supply <strong>Circle USDC</strong> into isolated
+						per-pair <strong>ERC-4626 PairVaults</strong>. Borrowers lock
+						a DEX <strong>V3 or V4 LP NFT</strong>
+						and borrow USDC from the matching pair. Interest accrues
+						on-chain. Underwater loans are liquidated by the market owner
+						or
+						<strong>Chainlink CRE</strong> via
+						<code>CreLiquidationReceiver</code>. After debt is pushed back
+						to the vault, a protocol fee may go to <code>feeTo</code>.
+					</p>
+				</div>
+				<div class="callout vault">
+					Idle USDC lives in <strong>PairVault</strong>, not on the market.
+					Legacy <code>lendUsdc</code> / <code>withdrawLender</code> revert
+					(<code>UsePairVault</code>).
+				</div>
+				<div class="callout warn">
+					Canonical address file:
+					<code>smart-contracts/deployments/sepolia-markets.json</code>.
+					Repo:
+					<a
+						href="https://github.com/unblocktechie/LPFy"
+						target="_blank"
+						rel="noreferrer"
+						>github.com/unblocktechie/LPFy</a
+					>.
+				</div>
+			</section>
+
+			<!-- System map -->
+			<section id="map">
+				<h2>2. System map</h2>
+				<p style="color: var(--muted); margin: 0 0 12px">
+					Three small diagrams instead of one tangled map — easier to see
+					where USDC lives and who calls whom.
+				</p>
+
+				<h3>2.1 Money flow (lend / borrow)</h3>
+				<div class="diagram">
+					<pre class="mermaid">
+flowchart LR
+  L[Lender]
+  PV[PairVault<br/>idle USDC]
+  USDC[(Circle USDC)]
+  M[MarketLendingModule]
+  B[Borrower]
+
+  L -->|deposit / redeem| PV
+  PV --- USDC
+  PV <-->|pull / push| M
+  B -->|borrow / repay| M
+
+  classDef vault fill:#e4eef7,stroke:#2a5f8f,color:#0f1f1a
+  classDef market fill:#dceee6,stroke:#1f6b52,color:#0f1f1a
+  class PV vault
+  class M market
+        </pre>
+				</div>
+				<p class="caption">
+					Lender ↔ PairVault only. USDC idle balance is in the vault.
+					Market pulls to the borrower and pushes on repay — it does not
+					hold idle lender cash.
+				</p>
+
+				<h3>2.2 Risk stack (what Market uses)</h3>
+				<div class="diagram">
+					<pre class="mermaid">
+flowchart TB
+  M[MarketLendingModule]
+
+  M --> V3[V3Adapter → DEX V3 NPM]
+  M --> V4[V4Adapter → DEX V4 PM]
+  M --> OR[ValuationOracle → Chainlink]
+  M --> BR[BorrowRateConfig]
+  M --> AP[StaticApySource]
+  M --> SR[SwapRouter02<br/>liquidation swaps]
+
+  classDef market fill:#dceee6,stroke:#1f6b52,color:#0f1f1a
+  class M market
+        </pre>
+				</div>
+				<p class="caption">
+					Adapters custody LP NFTs. Oracle prices collateral. APR/APY are
+					config. Router is liquidation-only.
+				</p>
+
+				<h3>2.3 Liquidation (CRE + fee)</h3>
+				<div class="diagram">
+					<pre class="mermaid">
+flowchart LR
+  CRE[CRE workflow] -->|writeReport| FW[KeystoneForwarder]
+  FW -->|onReport| RX[CreLiquidationReceiver]
+  RX -->|liquidate| M[Market]
+  O[Owner] -->|liquidate| M
+  M -->|unwind + swap| SR[SwapRouter02]
+  M -->|repay debt| PV[PairVault]
+  M -->|surplus fee| Fee[feeTo]
+  M -->|rest| B[Borrower]
+
+  classDef market fill:#dceee6,stroke:#1f6b52,color:#0f1f1a
+  classDef vault fill:#e4eef7,stroke:#2a5f8f,color:#0f1f1a
+  classDef fee fill:#f3e6ef,stroke:#7a3e6d,color:#0f1f1a
+  class M market
+  class PV vault
+  class Fee fee
+        </pre
+					>
+				</div>
+				<p class="caption">
+					CRE or owner triggers liquidate. Debt returns to PairVault first;
+					then feeTo; then borrower surplus.
+				</p>
+			</section>
+
+			<!-- Custody -->
+			<section id="custody">
+				<h2>3. Who holds what</h2>
+				<table>
+					<thead>
+						<tr>
+							<th>Asset</th>
+							<th>Custody</th>
+							<th>Notes</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Idle Circle USDC</td>
+							<td><code>PairVault</code> (per pair)</td>
+							<td>Lender deposits / redeems here</td>
+						</tr>
+						<tr>
+							<td>Outstanding principal + interest</td>
+							<td>Tracked on market; owed to vault</td>
+							<td>Included in vault <code>totalAssets()</code></td>
+						</tr>
+						<tr>
+							<td>DEX V3 LP NFT</td>
+							<td><code>V3Adapter</code></td>
+							<td>Unwind on liquidate</td>
+						</tr>
+						<tr>
+							<td>DEX V4 LP NFT</td>
+							<td><code>V4Adapter</code></td>
+							<td>Native ETH mapped to WETH for pair / valuation</td>
+						</tr>
+						<tr>
+							<td>Liquidation fee</td>
+							<td>Transferred to <code>feeTo</code></td>
+							<td>Only from surplus after vault repaid</td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+
+			<!-- Flows -->
+			<section id="flows">
+				<h2>4. Core flows</h2>
+
+				<h3>4.1 Supply (lender → vault)</h3>
+				<div class="diagram">
+					<pre class="mermaid">
+sequenceDiagram
+  actor Lender
+  participant Vault as PairVault
+  participant USDC as Circle USDC
+  Lender->>USDC: approve(vault)
+  Lender->>Vault: deposit / mint
+  Vault->>USDC: transferFrom
+  Vault-->>Lender: ERC-20 shares
+        </pre
+					>
+				</div>
+
+				<h3>4.2 Borrow (market pulls vault)</h3>
+				<div class="diagram">
+					<pre class="mermaid">
+sequenceDiagram
+  actor Borrower
+  participant Market as MarketLendingModule
+  participant Adapter as V3/V4 Adapter
+  participant Vault as PairVault
+  participant Oracle as ValuationOracle
+  Borrower->>Adapter: approve NFT
+  Borrower->>Market: borrowWithCollateral
+  Market->>Oracle: position value / LTV
+  Market->>Adapter: deposit NFT
+  Market->>Vault: pullLiquidity → borrower
+        </pre
+					>
+				</div>
+
+				<h3>4.3 Repay (market pushes vault)</h3>
+				<div class="diagram">
+					<pre class="mermaid">
+sequenceDiagram
+  actor Borrower
+  participant Market as MarketLendingModule
+  participant Vault as PairVault
+  Borrower->>Market: repay / repayAndWithdraw
+  Market->>Vault: pushLiquidity
+  Note over Market: optional NFT return when debt = 0
+        </pre
+					>
+				</div>
+
+				<h3>4.4 Liquidate</h3>
+				<div class="diagram">
+					<pre class="mermaid">
+sequenceDiagram
+  actor Auth as Owner / CRE
+  participant Market as MarketLendingModule
+  participant Adapter as Adapter
+  participant Router as SwapRouter02
+  participant Vault as PairVault
+  participant FeeTo as feeTo
+  participant Borrower as Borrower
+  Auth->>Market: liquidate(loanId)
+  Market->>Adapter: unwind
+  Market->>Router: swap → USDC
+  Market->>Vault: pushLiquidity(debt)
+  Market->>FeeTo: surplus × feeBps
+  Market->>Borrower: remaining surplus
+        </pre
+					>
+				</div>
+				<p class="caption">
+					<code>previewLiquidation</code> is public. Execute requires owner
+					or authorized CRE receiver.
+				</p>
+			</section>
+
+			<!-- Contracts -->
+			<section id="contracts">
+				<h2>5. Contracts — purpose &amp; surfaces</h2>
+
+				<div class="card" id="c-vault">
+					<span class="tag vault">ERC-4626</span>
+					<h3>PairVault</h3>
+					<p class="path">
+						smart-contracts/contracts/markets/PairVault.sol
+					</p>
+					<p>
+						Per-pair idle USDC vault. Standard ERC-4626 deposit / mint /
+						withdraw / redeem. Only the linked market may
+						<code>pullLiquidity</code> / <code>pushLiquidity</code>.
+						<code>totalAssets</code> = idle +
+						<code>market.assetsOwedToVault(pairId)</code>.
+					</p>
+					<ul class="fn-list">
+						<li>deposit / mint</li>
+						<li>withdraw / redeem</li>
+						<li>pullLiquidity</li>
+						<li>pushLiquidity</li>
+						<li>idleAssets</li>
+						<li>totalAssets</li>
+						<li>maxWithdraw / maxRedeem</li>
+					</ul>
+				</div>
+
+				<div class="card" id="c-market">
+					<span class="tag">Core</span>
+					<h3>MarketLendingModule</h3>
+					<p class="path">
+						smart-contracts/contracts/markets/MarketLendingModule.sol
+					</p>
+					<p>
+						Loans, LTV, interest accrual, liquidation, vault registry
+						(<code>vaultOf</code>), and fee config (<code>feeTo</code>,
+						<code>liquidationFeeBps</code>). Does not hold idle lender
+						cash.
+					</p>
+					<div class="two-col" style="margin-top: 12px">
+						<div>
+							<strong>Borrower</strong>
+							<ul class="fn-list">
+								<li>previewBorrow</li>
+								<li>borrowWithCollateral</li>
+								<li>borrowMore</li>
+								<li>repay</li>
+								<li>repayAndWithdraw</li>
+								<li>withdrawCollateral</li>
+								<li>currentDebt</li>
+							</ul>
+						</div>
+						<div>
+							<strong>Vault accounting</strong>
+							<ul class="fn-list">
+								<li>vaultOf</li>
+								<li>setVault</li>
+								<li>assetsOwedToVault</li>
+								<li>availableToBorrow</li>
+							</ul>
+						</div>
+					</div>
+					<div style="margin-top: 12px">
+						<strong>Liquidation / health</strong>
+						<ul class="fn-list">
+							<li>isLiquidatable</li>
+							<li>previewLiquidation</li>
+							<li>findFirstLiquidatableLoan</li>
+							<li>liquidate</li>
+							<li>accrueInterest</li>
+						</ul>
+					</div>
+				</div>
+
+				<div class="grid">
+					<div class="card">
+						<span class="tag">Rates</span>
+						<h3>BorrowRateConfig</h3>
+						<p class="path">contracts/markets/BorrowRateConfig.sol</p>
+						<p>Per-pair borrow APR and whether a pair is enabled.</p>
+						<ul class="fn-list">
+							<li>setPair</li>
+							<li>getBorrowAprBps</li>
+							<li>isPairSupported</li>
+							<li>pairIdOf</li>
+						</ul>
+					</div>
+					<div class="card">
+						<span class="tag">Rates</span>
+						<h3>StaticApySource</h3>
+						<p class="path">contracts/markets/StaticApySource.sol</p>
+						<p>Display lender APY only — does not move funds.</p>
+						<ul class="fn-list">
+							<li>setApyBps</li>
+							<li>setDefaultApyBps</li>
+							<li>getLenderApyBps</li>
+						</ul>
+					</div>
+					<div class="card">
+						<span class="tag">Oracle</span>
+						<h3>ValuationOracle</h3>
+						<p class="path">contracts/ValuationOracle.sol</p>
+						<p>LP amounts × Chainlink USD → debt-asset units for LTV.</p>
+						<ul class="fn-list">
+							<li>getPositionValueUsd</li>
+							<li>getTokenPriceUsd</li>
+							<li>convertUsdToDebtAsset</li>
+							<li>setFeed</li>
+							<li>setAdapter</li>
+						</ul>
+					</div>
+					<div class="card">
+						<span class="tag">Custody</span>
+						<h3>V3Adapter</h3>
+						<p class="path">contracts/adapters/V3Adapter.sol</p>
+						<p>
+							Holds V3 LP NFTs; deposit / withdraw / unwind for
+							liquidation.
+						</p>
+						<ul class="fn-list">
+							<li>deposit</li>
+							<li>withdraw</li>
+							<li>unwind</li>
+							<li>owns</li>
+							<li>getPositionMeta</li>
+							<li>getAmountsForValuation</li>
+						</ul>
+					</div>
+					<div class="card">
+						<span class="tag">Custody</span>
+						<h3>V4Adapter</h3>
+						<p class="path">contracts/adapters/V4Adapter.sol</p>
+						<p>
+							Same role for V4 positions; ETH → WETH mapping for pair
+							identity.
+						</p>
+						<ul class="fn-list">
+							<li>deposit</li>
+							<li>withdraw</li>
+							<li>unwind</li>
+							<li>registerPosition</li>
+							<li>getAmountsForValuation</li>
+						</ul>
+					</div>
+					<div class="card">
+						<span class="tag">CRE</span>
+						<h3>CreLiquidationReceiver</h3>
+						<p class="path">
+							contracts/markets/CreLiquidationReceiver.sol
+						</p>
+						<p>
+							Forwarder <code>onReport</code> →
+							<code>market.liquidate</code>. Does not configure fees.
+						</p>
+						<ul class="fn-list">
+							<li>needsUpkeep</li>
+							<li>onReport</li>
+							<li>setForwarder</li>
+							<li>setMarket</li>
+						</ul>
+					</div>
+				</div>
+
+				<div class="card" style="margin-top: 4px">
+					<span class="tag">Support</span>
+					<h3>Libraries &amp; interfaces</h3>
+					<table>
+						<thead>
+							<tr>
+								<th>Area</th>
+								<th>Role</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>
+									<code>IPairVault</code> / vault accounting interfaces
+								</td>
+								<td>Pull/push + assets owed surface</td>
+							</tr>
+							<tr>
+								<td><code>IPositionAdapter</code></td>
+								<td>Adapter surface for market + oracle</td>
+							</tr>
+							<tr>
+								<td><code>IValuationOracle</code></td>
+								<td>Oracle surface</td>
+							</tr>
+							<tr>
+								<td>
+									<code>TickMath</code> / <code>FullMath</code> /
+									<code>LiquidityAmounts</code> / <code>PoolId</code>
+								</td>
+								<td>DEX math for valuation</td>
+							</tr>
+							<tr>
+								<td><code>LendingTypes</code></td>
+								<td>Shared protocol version (V3 / V4)</td>
+							</tr>
+							<tr>
+								<td><code>mocks/*</code></td>
+								<td>Hardhat tests only</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<!-- Fees -->
+			<section id="fees">
+				<h2>6. Fee structure (on market)</h2>
+				<table>
+					<thead>
+						<tr>
+							<th>Knob</th>
+							<th>Meaning</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td><code>liquidationFeeBps</code></td>
+							<td>
+								% of surplus after vault debt repaid (<code>1000</code>
+								= 10%)
+							</td>
+						</tr>
+						<tr>
+							<td><code>feeTo</code></td>
+							<td>
+								Fee recipient — independent of Ownable
+								<code>owner</code>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<div
+					class="callout"
+					style="
+						border-left-color: var(--fee);
+						background: var(--fee-soft);
+					"
+				>
+					Order on liquidate: repay PairVault → fee to <code>feeTo</code> →
+					remainder to borrower. Shortfall → no fee. Set via
+					<code>setLiquidationFeeBps</code> / <code>setFeeTo</code> or
+					redeploy env vars.
+				</div>
+			</section>
+
+			<!-- External -->
+			<section id="external">
+				<h2>7. External dependencies</h2>
+				<div class="card">
+					<table>
+						<thead>
+							<tr>
+								<th>Dependency</th>
+								<th>Used for</th>
+								<th>Called by</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td><span class="tag ext">ERC20</span> Circle USDC</td>
+								<td>Debt asset &amp; vault asset</td>
+								<td>PairVault, MarketLendingModule</td>
+							</tr>
+							<tr>
+								<td>
+									<span class="tag ext">DEX</span> V3
+									NonfungiblePositionManager
+								</td>
+								<td>Transfer / decrease / collect LP NFTs</td>
+								<td>V3Adapter</td>
+							</tr>
+							<tr>
+								<td>
+									<span class="tag ext">DEX</span> V4 PositionManager +
+									StateView
+								</td>
+								<td>V4 custody &amp; unwind</td>
+								<td>V4Adapter</td>
+							</tr>
+							<tr>
+								<td><span class="tag ext">DEX</span> SwapRouter02</td>
+								<td>Non-USDC → USDC on liquidation</td>
+								<td>MarketLendingModule</td>
+							</tr>
+							<tr>
+								<td>
+									<span class="tag ext">Chainlink</span> price feeds
+								</td>
+								<td>Token USD for LTV</td>
+								<td>ValuationOracle</td>
+							</tr>
+							<tr>
+								<td>
+									<span class="tag ext">CRE</span> KeystoneForwarder
+								</td>
+								<td>Deliver signed reports</td>
+								<td>CreLiquidationReceiver</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<!-- Layout -->
+			<section id="layout">
+				<h2>8. Repo layout (contracts package)</h2>
+				<div class="card">
+					<pre
+						style="
+							margin: 0;
+							font-family: var(--mono);
+							font-size: 12.5px;
+							line-height: 1.6;
+							overflow-x: auto;
+							color: var(--code);
+						"
+					>
+smart-contracts/
+├── contracts/
+│   ├── markets/
+│   │   ├── MarketLendingModule.sol
+│   │   ├── PairVault.sol
+│   │   ├── CreLiquidationReceiver.sol
+│   │   ├── BorrowRateConfig.sol
+│   │   └── StaticApySource.sol
+│   ├── adapters/          # V3Adapter, V4Adapter
+│   ├── ValuationOracle.sol
+│   ├── interfaces/
+│   ├── libraries/
+│   └── mocks/             # tests only
+├── scripts/               # redeploy, fee setters, local keeper
+├── test/
+└── deployments/           # sepolia-markets.json</pre
+					>
+				</div>
+				<div class="card">
+					<span class="tag">Git</span>
+					<h3>Repository</h3>
+					<p style="margin: 0">
+						<a
+							href="https://github.com/unblocktechie/LPFy"
+							target="_blank"
+							rel="noreferrer"
+							>github.com/unblocktechie/LPFy</a
+						>
+					</p>
+					<p style="margin: 8px 0 0; color: var(--muted); font-size: 13px">
+						Key packages:
+						<code>smart-contracts/</code> · <code>web/</code> ·
+						<code>cre/</code> ·
+						<code>docs/</code>
+					</p>
+				</div>
+			</section>
+
+			<!-- Deployed contracts -->
+			<section id="deployed">
+				<h2>Deployed contracts (Sepolia)</h2>
+				<div class="card">
+					<p
+						style="margin: 0 0 12px; color: var(--muted); font-size: 14px"
+					>
+						From
+						<code>smart-contracts/deployments/sepolia-markets.json</code>.
+						External Uniswap / Chainlink / Circle addresses are in
+						<a href="#external">section 7</a>.
+					</p>
+					<table>
+						<thead>
+							<tr>
+								<th>Contract</th>
+								<th>Address</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td><code>MarketLendingModule</code></td>
+								<td>
+									<code
+										>0x658A244Ad0c51F0C49d1fF79678bc642365b6E65</code
+									>
+								</td>
+							</tr>
+							<tr>
+								<td><code>ValuationOracle</code></td>
+								<td>
+									<code
+										>0xA659A2C34c5E9026f7777AF654d0F742f8444f7F</code
+									>
+								</td>
+							</tr>
+							<tr>
+								<td><code>V3Adapter</code> / <code>V4Adapter</code></td>
+								<td>
+									<code
+										>0x8Aafb1e3941E9b5f6b947e6213ab6Bf397845768</code
+									>
+									/
+									<code
+										>0x33234ac1508034A9494baa3d82D055a6b1ae92Bd</code
+									>
+								</td>
+							</tr>
+							<tr>
+								<td><code>BorrowRateConfig</code></td>
+								<td>
+									<code
+										>0xb2e0c7b38b7DECE87A4E3D41A465F0175Ff65d25</code
+									>
+								</td>
+							</tr>
+							<tr>
+								<td><code>StaticApySource</code></td>
+								<td>
+									<code
+										>0x2b0B69EB316BCBaCc7167Dc1764637a7eBD296C2</code
+									>
+								</td>
+							</tr>
+							<tr>
+								<td><code>CreLiquidationReceiver</code></td>
+								<td>
+									<code
+										>0xc9682A8649B7587e43a9cb85068d23081C5397F7</code
+									>
+								</td>
+							</tr>
+							<tr>
+								<td><code>PairVault</code> USDC/WETH</td>
+								<td>
+									<code
+										>0x9478AD78af6C7758ADf8Aa78C2cc5ADEd5990843</code
+									>
+								</td>
+							</tr>
+							<tr>
+								<td><code>PairVault</code> USDC/USDT</td>
+								<td>
+									<code
+										>0xCE934C71ed024Da403fB68EC4C9e26C996d7E7ca</code
+									>
+								</td>
+							</tr>
+							<tr>
+								<td><code>PairVault</code> USDC/WBTC</td>
+								<td>
+									<code
+										>0xab30B8fEBEAdf0B2094Db087Df3CA4E632e27Ca0</code
+									>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<footer>
+				LPFY Markets · Contract architecture ·
+				<a
+					href="https://github.com/unblocktechie/LPFy"
+					target="_blank"
+					rel="noreferrer"
+					>GitHub</a
+				>
+				·
+				<a
+					href="https://github.com/unblocktechie/LPFy/blob/main/docs/Project_Overview.pdf"
+					target="_blank"
+					rel="noreferrer"
+					>Project overview</a
+				>
+				·
+				<a
+					href="https://github.com/unblocktechie/LPFy/blob/main/docs/Chainlink_CRE.pdf"
+					target="_blank"
+					rel="noreferrer"
+					>Chainlink &amp; CRE</a
+				>
+			</footer>
+		</div>
+	</body>
+</html>

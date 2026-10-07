@@ -1,72 +1,73 @@
-# Web — LPFY Markets
+# LPFY - Web
 
-React + Vite interface for LPFY Markets. The application connects to the deployed lending contracts and provides market discovery, ERC-4626 supply flows, LP-NFT-backed borrowing, pool liquidity metrics, and wallet position management.
+React + Vite UI for DEX LP NFT lending on **Ethereum Sepolia**.
 
-## Technology
+**Debt asset:** Circle Sepolia USDC (`0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`, 6 decimals).
 
-- React 18 + TypeScript
-- Vite
-- wagmi + viem
-- TanStack Query
-- React Router
+**Market:** `MarketLendingModule` · **Supply:** per-pair **ERC-4626 `PairVault`** (not `lendUsdc`).
 
-## Application flows
+## ERC-4626 supply path
 
-### Markets
+| Action    | UI / contract                                                                                  |
+| --------- | ---------------------------------------------------------------------------------------------- |
+| Supply    | Approve USDC → `vault.deposit(assets, user)`                                                   |
+| Withdraw  | `vault.withdraw` / `redeem` (idle cash only)                                                   |
+| Balances  | `balanceOf` + `convertToAssets`; vault from `market.vaultOf(pairId)` or `VITE_SEPOLIA_VAULT_*` |
+| Pool cash | Vault idle / market views that read vault                                                      |
 
-The Markets view presents configured lending pairs with live contract data including cash, utilization, lender APY, borrow APR, and pair configuration.
+Code: [SupplyPanel](src/features/supply/SupplyPanel.tsx), ABI in [abi.ts](src/abi.ts) (`pairVaultAbi`).
 
-### Supply
+More detail: [Project Overview](../docs/Project_Overview.pdf).
 
-Lenders supply the configured debt asset through pair-specific ERC-4626 vaults. The interface reads vault balances and protocol liquidity and submits approval/deposit transactions through the shared transaction layer.
-
-### Borrow
-
-Borrowers can select supported Uniswap V3 or V4 LP NFT positions, preview borrowing capacity, approve the position manager, and open a loan against matching LP collateral.
-
-### Assets
-
-The Assets view reads the connected wallet's lending positions and loans, including vault shares, supplied assets, debt positions, and related transaction actions.
-
-## Routes
-
-| Route | Purpose |
-|---|---|
-| `/` or `/markets` | Browse lending markets and open a pair |
-| `/markets/:marketId` | View a market and interact with supply/borrow flows |
-| `/assets` | View the connected wallet's supplies and loans |
-
-## Run locally
+## Installation
 
 ```bash
 cd web
 cp .env.example .env
-npm ci
-npm run dev
+npm install
 ```
 
-Open `http://localhost:5173` and connect a wallet to the configured network.
+1. Set `VITE_SEPOLIA_RPC_URL` (and other RPCs) in [web/.env](.env.example).
+2. Load contract addresses — either paste the `webEnv` block from [Sepolia markets deployment](../smart-contracts/deployments/sepolia-markets.json), or from `smart-contracts/` run:
 
-## Environment
+   ```bash
+   npm run sync:addresses
+   ```
 
-Use `.env.example` as the source for frontend RPC and contract configuration. Contract addresses should correspond to the deployment used by the connected network.
+3. Start the app:
+
+   ```bash
+   npm run dev
+   ```
+
+Open http://localhost:5173 and connect on **Sepolia**.
+
+Full end-to-end setup: [Setup & Deploy guide](../docs/SETUP_AND_DEPLOY.md).
+
+## Routes
+
+| Route             | Purpose                                      |
+| ----------------- | -------------------------------------------- |
+| `/` or `/markets` | Browse pairs, vault supply, borrow vs LP NFT |
+| `/assets`         | Your vault supplies + loans                  |
+
+## Env ([web/.env](.env.example))
 
 ```env
 VITE_NETWORK=sepolia
-VITE_SEPOLIA_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
-VITE_SEPOLIA_MARKET_MODULE=
-VITE_SEPOLIA_ORACLE=
-VITE_SEPOLIA_V3_ADAPTER=
-VITE_SEPOLIA_V4_ADAPTER=
-VITE_SEPOLIA_USDC=
-VITE_SEPOLIA_BORROW_RATES=
-VITE_SEPOLIA_APY_SOURCE=
-VITE_SEPOLIA_USDT=
-VITE_SEPOLIA_WBTC=
-VITE_SEPOLIA_CRE_RECEIVER=
-VITE_SEPOLIA_VAULT_USDC_WETH=
-VITE_SEPOLIA_VAULT_USDC_USDT=
-VITE_SEPOLIA_VAULT_USDC_WBTC=
+VITE_SEPOLIA_MARKET_MODULE=0x658A244Ad0c51F0C49d1fF79678bc642365b6E65
+VITE_SEPOLIA_ORACLE=0xA659A2C34c5E9026f7777AF654d0F742f8444f7F
+VITE_SEPOLIA_V3_ADAPTER=0x8Aafb1e3941E9b5f6b947e6213ab6Bf397845768
+VITE_SEPOLIA_V4_ADAPTER=0x33234ac1508034A9494baa3d82D055a6b1ae92Bd
+VITE_SEPOLIA_USDC=0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238
+VITE_SEPOLIA_BORROW_RATES=0xb2e0c7b38b7DECE87A4E3D41A465F0175Ff65d25
+VITE_SEPOLIA_APY_SOURCE=0x2b0B69EB316BCBaCc7167Dc1764637a7eBD296C2
+VITE_SEPOLIA_USDT=0xE699A7254f05f93a539120BA640bf2D1C87b48f1
+VITE_SEPOLIA_WBTC=0x65bBDdD937C4CE8aCf308c0787b857664616BC2c
+VITE_SEPOLIA_CRE_RECEIVER=0xc9682A8649B7587e43a9cb85068d23081C5397F7
+VITE_SEPOLIA_VAULT_USDC_WETH=0x9478AD78af6C7758ADf8Aa78C2cc5ADEd5990843
+VITE_SEPOLIA_VAULT_USDC_USDT=0xCE934C71ed024Da403fB68EC4C9e26C996d7E7ca
+VITE_SEPOLIA_VAULT_USDC_WBTC=0xab30B8fEBEAdf0B2094Db087Df3CA4E632e27Ca0
 ```
 
 Prefer live `vaultOf(pairId)` on-chain; env vaults are fallbacks. Restart Vite after changes.
@@ -79,25 +80,16 @@ Isolated pools + vaults: **USDC/WETH**, **USDC/USDT**, **USDC/WBTC**.
 
 ```text
 src/
-├── features/
-│   ├── markets/
-│   ├── supply/
-│   ├── borrow/
-│   ├── loans/
-│   ├── liquidate/
-│   ├── positions/
-│   └── pool/
-├── components/
-├── hooks/
-├── lib/
-├── providers/
-├── abi.ts
-└── layout/AppShell.tsx
+  App.tsx                 # providers only
+  layout/AppShell.tsx
+  features/supply|borrow|markets|loans|pool|positions/
+  hooks/tx.tsx
 ```
 
-## Build
+## Related
 
-```bash
-npm run build
-npm run preview
-```
+- [Project README](../README.md)
+- [Project Overview](../docs/Project_Overview.pdf)
+- [Contract Architecture](../docs/Smart_Contract_Architecture.pdf)
+- [Smart contracts README](../smart-contracts/README.md)
+- [CRE README](../cre/README.md)

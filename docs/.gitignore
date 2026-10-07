@@ -1,0 +1,8 @@
+# Generated / local preview junk
+.DS_Store
+*.log
+*.tmp
+
+# Optional local exports
+_site/
+.out/

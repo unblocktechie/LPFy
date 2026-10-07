@@ -2,10 +2,10 @@
 
 ## Roles
 
-| Role         | Who                  | What they do                                       | Main functions                                                               |
-| ------------ | -------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------- |
-| **Lender**   | Supplies Circle USDC | Earns from borrower interest via vault share price | **`PairVault.deposit` / `withdraw` / `redeem`** (ERC-4626)                   |
-| **Borrower** | Posts DEX LP NFT     | Borrows USDC from the **same pair** only           | `borrowWithCollateral` / `repay` / `repayAndWithdraw` / `withdrawCollateral` |
+| Role | Who | What they do | Main functions |
+|------|-----|--------------|----------------|
+| **Lender** | Supplies Circle USDC | Earns from borrower interest via vault share price | **`PairVault.deposit` / `withdraw` / `redeem`** (ERC-4626) |
+| **Borrower** | Posts DEX LP NFT | Borrows USDC from the **same pair** only | `borrowWithCollateral` / `repay` / `repayAndWithdraw` / `withdrawCollateral` |
 
 Each pair has an **isolated** book on `MarketLendingModule` **and** a dedicated **`PairVault`** holding idle USDC.
 
@@ -26,19 +26,19 @@ Lender   → vault.withdraw / redeem     → idle USDC only
 
 ## Contracts
 
-| Contract                 | Role                                                                    |
-| ------------------------ | ----------------------------------------------------------------------- |
-| `PairVault`              | ERC-4626; idle USDC; `totalAssets` = idle + principal/interest owed     |
-| `MarketLendingModule`    | Loans, LTV, liquidate; `vaultOf[pairId]`; `feeTo` + `liquidationFeeBps` |
-| `BorrowRateConfig`       | Per-pair borrow APR                                                     |
-| `StaticApySource`        | Lender APY display (UI)                                                 |
-| `CreLiquidationReceiver` | CRE → `liquidate`                                                       |
+| Contract | Role |
+|----------|------|
+| `PairVault` | ERC-4626; idle USDC; `totalAssets` = idle + principal/interest owed |
+| `MarketLendingModule` | Loans, LTV, liquidate; `vaultOf[pairId]`; `feeTo` + `liquidationFeeBps` |
+| `BorrowRateConfig` | Per-pair borrow APR |
+| `StaticApySource` | Lender APY display (UI) |
+| `CreLiquidationReceiver` | CRE → `liquidate` |
 
 ## Liquidity, yield & fees
 
 - Utilization capped per pool (`maxUtilizationBps`, default 80%)
 - Available cash = vault `idleAssets()` (not market balance)
-- Lender yield = share of accrued borrower interest
+- Lender yield = share of accrued borrower interest (see [Project Overview](../../../docs/Project_Overview.pdf))
 - **Liquidation fee:** `liquidationFeeBps` of surplus → `feeTo` (separate from Ownable owner); remainder → borrower
 
 ## Sepolia

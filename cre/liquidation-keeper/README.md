@@ -10,7 +10,7 @@ CRE does not set fees; configure on the market (`setLiquidationFeeBps` / `setFee
 
 ## Addresses (Sepolia)
 
-Source: [`smart-contracts/deployments/sepolia-markets.json`](../../smart-contracts/deployments/sepolia-markets.json)
+Source: [Sepolia markets deployment](../../smart-contracts/deployments/sepolia-markets.json)
 
 | Contract | Address |
 | -------- | ------- |
@@ -20,7 +20,7 @@ Source: [`smart-contracts/deployments/sepolia-markets.json`](../../smart-contrac
 | Forwarder (Keystone) | `0x15fC6ae953E024d975e77382eEeC56A9101f9F88` |
 | SwapRouter02 | `0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E` |
 
-`config.staging.json` / `config.production.json` → `contractAddress` must match **CreLiquidationReceiver**.
+[Staging config](./config.staging.json) / [production config](./config.production.json) → `contractAddress` must match **CreLiquidationReceiver**.
 
 Pattern: [keeper-bot TypeScript template](https://github.com/smartcontractkit/cre-templates/tree/main/starter-templates/keeper-bot/keeper-bot-ts).
 
@@ -38,11 +38,11 @@ Pattern: [keeper-bot TypeScript template](https://github.com/smartcontractkit/cr
    npm run redeploy:sepolia
    ```
 
-   This updates `config.staging.json` / `config.production.json` in this folder.
+   This updates [staging config](./config.staging.json) / [production config](./config.production.json) in this folder.
 
-2. Confirm `config.staging.json` `contractAddress` is the CreLiquidationReceiver above.
+2. Confirm [staging config](./config.staging.json) `contractAddress` is the CreLiquidationReceiver above.
 
-3. Set `cre/.env` → `CRE_ETH_PRIVATE_KEY` (64 hex chars, **no** `0x`) for `--broadcast`.
+3. Set [cre/.env](../.env.example) → `CRE_ETH_PRIVATE_KEY` (64 hex chars, **no** `0x`) for `--broadcast`.
 
 4. Simulate (from `cre/`):
 
@@ -50,3 +50,5 @@ Pattern: [keeper-bot TypeScript template](https://github.com/smartcontractkit/cr
    cre workflow simulate liquidation-keeper --non-interactive --trigger-index 0 --target staging-settings
    cre workflow simulate liquidation-keeper --non-interactive --trigger-index 0 --target staging-settings --broadcast
    ```
+
+Full guide: [CRE README](../README.md) · Docs: [Chainlink & CRE](../../docs/Chainlink_CRE.pdf)
