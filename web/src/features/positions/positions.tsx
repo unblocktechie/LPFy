@@ -287,6 +287,7 @@ export function PositionRow({
 	/** previewBorrow: pairId, borrowAprBps, lenderApyBps, collateralValueUsd, maxBorrowUsdc, poolAvailable */
 	const valueUsd = preview?.[3] as bigint | undefined;
 	const maxBorrow = preview?.[4] as bigint | undefined;
+	const poolAvailable = preview?.[5] as bigint | undefined;
 	const eligible =
 		previewStatus === 'success' && maxBorrow !== undefined && maxBorrow > 0n;
 	const feeLabel = formatPoolFee(fee);
@@ -298,10 +299,16 @@ export function PositionRow({
 		query: { enabled: net.contractsConfigured && !compact },
 	});
 	let status = '—';
+	let statusHint: string | undefined;
 	if (previewStatus === 'failure') status = 'Unsupported';
 	else if (eligible) status = 'Ready';
-	else if (preview && maxBorrow === 0n) status = 'No capacity';
-	else if (previewLoading) status = 'Checking…';
+	else if (preview && poolAvailable === 0n) {
+		status = 'No pool liquidity';
+		statusHint = `No ${debtSym} has been supplied to this pool yet, so there is nothing to borrow. Try again once lenders deposit.`;
+	} else if (preview && maxBorrow === 0n) {
+		status = 'Value too low';
+		statusHint = 'This position is worth too little to borrow against.';
+	} else if (previewLoading) status = 'Checking…';
 
 	return (
 		<tr className={selected ? 'selected' : undefined}>
@@ -357,7 +364,10 @@ export function PositionRow({
 				)}
 			</td>
 			<td data-label="Status">
-				<span className={`status-pill ${eligible ? 'ok' : 'muted'}`}>
+				<span
+					className={`status-pill ${eligible ? 'ok' : 'muted'}`}
+					title={statusHint}
+				>
 					{status}
 				</span>
 			</td>

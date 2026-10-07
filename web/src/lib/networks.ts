@@ -47,31 +47,31 @@ export const APP_NETWORK = {
   /** MarketLendingModule — lender + borrower entrypoint */
   lendingModule: envAddress(
     import.meta.env.VITE_SEPOLIA_MARKET_MODULE,
-    "0x749be3f09Bae7f32bfe0Ad55D705658615AeB6C2"
+    zeroAddressFallback()
   ),
   whitelist: envAddress(
     import.meta.env.VITE_SEPOLIA_MARKET_MODULE,
-    "0x749be3f09Bae7f32bfe0Ad55D705658615AeB6C2"
+    zeroAddressFallback()
   ),
   oracle: envAddress(
     import.meta.env.VITE_SEPOLIA_ORACLE,
-    "0x057Cf93d6E404171f1505503604FC670cdB5b0A9"
+    zeroAddressFallback()
   ),
   v3Adapter: envAddress(
     import.meta.env.VITE_SEPOLIA_V3_ADAPTER,
-    "0x651396c2e4FD4A35dA559203e848265711067DC4"
+    zeroAddressFallback()
   ),
   v4Adapter: envAddress(
     import.meta.env.VITE_SEPOLIA_V4_ADAPTER,
-    "0x4a9D2F51EA7A8553987E699b68BFE85c426278C9"
+    zeroAddressFallback()
   ),
   borrowRateConfig: envAddress(
     import.meta.env.VITE_SEPOLIA_BORROW_RATES,
-    "0x49b19f400559923C5325357074AD80Ee109f43b8"
+    zeroAddressFallback()
   ),
   staticApySource: envAddress(
     import.meta.env.VITE_SEPOLIA_APY_SOURCE,
-    "0x6CD7b7cEe61B395fC7A39353FfD5426ea2C454f8"
+    zeroAddressFallback()
   ),
   debtAsset: DEBT_ASSET,
   debtAssets: [DEBT_ASSET] as const,

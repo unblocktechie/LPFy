@@ -679,20 +679,28 @@ function LoanCard({
 	const borrowDisabled = busy || !amt || borrowOverMax;
 	const repayDisabled = busy || (!amt && totalDebt === 0n);
 
-	/** Full close over-requests amount (max uint); contract caps to debt due. */
+	/**
+	 * Full close still sends max uint to repay / repayAndWithdraw so the
+	 * contract accrues then clears 100% of debt (no dust blocking NFT return).
+	 * Approve only debt + a small buffer — never unlimited allowance.
+	 */
+	function repayApproveAmount(amount: bigint): bigint {
+		if (amount !== maxUint256) return amount;
+		if (totalDebt === 0n) return 0n;
+		// ~0.1% + 1 unit covers interest accrual between approve and repay txs.
+		return totalDebt + totalDebt / 1000n + 1n;
+	}
+
 	function repayCalls(amount: bigint, alsoWithdraw: boolean): TxCall[] {
 		const calls: TxCall[] = [];
-		const needAllowance = amount === maxUint256 ? totalDebt : amount;
-		if (!allowance || allowance < needAllowance) {
+		const approveAmt = repayApproveAmount(amount);
+		if (approveAmt > 0n && (!allowance || allowance < approveAmt)) {
 			calls.push({
 				to: debtAsset,
 				data: encodeFunctionData({
 					abi: erc20Abi,
 					functionName: 'approve',
-					args: [
-						net.addresses.lendingModule,
-						amount === maxUint256 ? maxUint256 : amount,
-					],
+					args: [net.addresses.lendingModule, approveAmt],
 				}),
 			});
 		}

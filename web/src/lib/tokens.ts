@@ -28,22 +28,6 @@ const KNOWN: Record<string, { symbol: string; decimals: number; name: string }> 
     decimals: 18,
     name: "Dai Stablecoin",
   },
-  // Base mainnet
-  "0x4200000000000000000000000000000000000006": {
-    symbol: "WETH",
-    decimals: 18,
-    name: "Wrapped Ether",
-  },
-  "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913": {
-    symbol: "USDC",
-    decimals: 6,
-    name: "USD Coin",
-  },
-  "0xfde4c96c8593536e31f229ea8f37b2ada2699bb2": {
-    symbol: "USDT",
-    decimals: 6,
-    name: "Tether USD",
-  },
   // Sepolia
   "0xfff9976782d46cc05630d1f6ebab18b2324d6b14": {
     symbol: "WETH",
