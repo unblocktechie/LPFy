@@ -1,0 +1,18 @@
+{
+  "name": "lpfy-liquidation-keeper",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "postinstall": "bunx cre-setup || true"
+  },
+  "dependencies": {
+    "@chainlink/cre-sdk": "^1.6.0",
+    "viem": "2.34.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

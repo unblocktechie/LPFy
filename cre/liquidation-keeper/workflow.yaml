@@ -1,0 +1,19 @@
+# ==========================================================================
+# CRE WORKFLOW SETTINGS — workflow-artifacts is a sibling of user-workflow
+# (not nested). See docs.chain.link CRE workflow.yaml examples.
+# ==========================================================================
+staging-settings:
+  user-workflow:
+    workflow-name: "lpfy-liquidation-staging"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.staging.json"
+    secrets-path: ""
+
+production-settings:
+  user-workflow:
+    workflow-name: "lpfy-liquidation-production"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.production.json"
+    secrets-path: ""
