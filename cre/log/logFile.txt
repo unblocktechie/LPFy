@@ -1,0 +1,41 @@
+﻿===== Keeper run 2026-10-07 18:30:32 =====
+Initializing...
+Loading settings...
+Checking RPC connectivity...
+Compiling workflow...
+✓ Workflow compiled
+✓ Simulation limits enabled
+  HTTP: req=120kb resp=250kb timeout=10s | ConfHTTP: req=125kb resp=500kb timeout=1m30s | Consensus obs=25kb | ChainWrite evm_report=50kb evm_gas=10000000 solana_report=265b solana_cu=300000 | WASM binary=100mb compressed=20mb
+  Binary hash: edd9d0a75bf028128d057923a94b99cf21d15396e44e3c3a8eb3324969265ca6
+  Config hash: d6f88b074344e2f9c8e2a934a666904c730a5ccb2c664d24f4a1c084673a38d6
+2026-10-07T18:30:47Z [SIMULATION] Simulator Initialized
+2026-10-07T18:30:47Z [SIMULATION] Running trigger trigger=cron-trigger@1.0.0
+2026-10-07T18:30:48Z [USER LOG] needsUpkeep=true loanId=8
+2026-10-07T18:30:48Z [USER LOG] Liquidated loan #8. TX: 0x0000000000000000000000000000000000000000000000000000000000000000
+✓ Workflow Simulation Result:
+"Liquidated loan 8 — tx: 0x0000000000000000000000000000000000000000000000000000000000000000"
+2026-10-07T18:30:48Z [SIMULATION] Execution finished signal received
+2026-10-07T18:30:48Z [SIMULATION] Skipping WorkflowEngineV2
+
+
+
+
+===== Keeper run 2026-10-07 18:31:07 =====
+Initializing...
+Loading settings...
+Checking RPC connectivity...
+Compiling workflow...
+✓ Workflow compiled
+✓ Simulation limits enabled
+  HTTP: req=120kb resp=250kb timeout=10s | ConfHTTP: req=125kb resp=500kb timeout=1m30s | Consensus obs=25kb | ChainWrite evm_report=50kb evm_gas=10000000 solana_report=265b solana_cu=300000 | WASM binary=100mb compressed=20mb
+  Binary hash: edd9d0a75bf028128d057923a94b99cf21d15396e44e3c3a8eb3324969265ca6
+  Config hash: d6f88b074344e2f9c8e2a934a666904c730a5ccb2c664d24f4a1c084673a38d6
+2026-10-07T18:31:22Z [SIMULATION] Simulator Initialized
+2026-10-07T18:31:22Z [SIMULATION] Running trigger trigger=cron-trigger@1.0.0
+2026-10-07T18:31:22Z [USER LOG] needsUpkeep=true loanId=8
+2026-10-07T18:31:37Z [USER LOG] Liquidated loan #8. TX: 0xf5e95771611cbd049fb4fb7708caf106a71518409c867d9e2adb1f813c664b0d
+✓ Workflow Simulation Result:
+"Liquidated loan 8 — tx: 0xf5e95771611cbd049fb4fb7708caf106a71518409c867d9e2adb1f813c664b0d"
+2026-10-07T18:31:37Z [SIMULATION] Execution finished signal received
+2026-10-07T18:31:37Z [SIMULATION] Skipping WorkflowEngineV2
+
