@@ -58,7 +58,7 @@ export class CreLiquidationReceiver {
     public readonly address: Address,
   ) {}
 
-  needsUpkeep(runtime: Runtime<unknown>): { upkeepNeeded: boolean; loanId: bigint } {
+  needsUpkeep(runtime: Runtime): { upkeepNeeded: boolean; loanId: bigint } {
     const callData = encodeFunctionData({
       abi: CreLiquidationReceiverABI,
       functionName: 'needsUpkeep',
@@ -71,8 +71,6 @@ export class CreLiquidationReceiver {
           to: this.address,
           data: callData,
         }),
-        // Latest: newly redeployed receivers have no code at finalized yet.
-        // Keepers also want the freshest liquidatable state.
         blockNumber: LATEST_BLOCK_NUMBER,
       })
       .result()
@@ -88,7 +86,7 @@ export class CreLiquidationReceiver {
 
   /** Writes abi-encoded report bytes to onReport via KeystoneForwarder. */
   writeReport(
-    runtime: Runtime<unknown>,
+    runtime: Runtime,
     callData: Hex,
     gasConfig?: { gasLimit?: string },
   ) {

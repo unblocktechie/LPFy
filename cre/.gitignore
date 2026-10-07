@@ -8,6 +8,7 @@ node_modules/
 **/node_modules/
 **/dist/
 .cre/
+.cre_build_tmp.js
 
 # OS / editor
 .DS_Store
