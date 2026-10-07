@@ -2,9 +2,11 @@ import { useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi';
 import { BrandLockup } from '../components/BrandMark';
-import { PoolLiquidity } from '../features/pool/PoolLiquidity';
 import { shortAddr } from '../lib/format';
 import { useNetwork } from '../lib/networkContext';
+import { pageTitleFromPath, pathFromLegacyHash, tabFromPath } from '../lib/routing';
+import { Markets } from '../features/markets/Markets';
+import { Loans } from '../features/loans/Loans';
 
 export function AppShell() {
   const navigate = useNavigate();
@@ -15,14 +17,25 @@ export function AppShell() {
   const { connectors, connect, isPending: connecting } = useConnect();
   const { disconnect } = useDisconnect();
   const wrongNetwork = isConnected && walletChainId !== net.chainId;
+  const tab = tabFromPath(location.pathname);
 
-  useEffect(() => { document.title = 'LPFY Markets'; }, [location.pathname]);
+  useEffect(() => { document.title = pageTitleFromPath(location.pathname); }, [location.pathname]);
+  useEffect(() => {
+    if (!location.hash) return;
+    const nextPath = pathFromLegacyHash(location.hash);
+    if (nextPath) navigate(nextPath, { replace: true });
+  }, [location.hash, navigate]);
+
+  const nav = [
+    { id: 'markets', label: 'Markets', path: '/' },
+    { id: 'assets', label: 'Assets', path: '/assets' },
+  ] as const;
 
   return (
     <div className="app">
       <header className="app-header"><div className="app-header-inner">
         <button type="button" className="brand brand-btn" onClick={() => navigate('/')}><BrandLockup /></button>
-        <nav className="tabs" aria-label="Primary"><button className="tab active" onClick={() => navigate('/')}>Markets</button></nav>
+        <nav className="tabs" aria-label="Primary">{nav.map(({id,label,path}) => <button key={id} className={`tab ${tab === id ? 'active' : ''}`} onClick={() => navigate(path)}>{label}</button>)}</nav>
         <div className="header-controls"><span className="pill">{net.label}</span><div className="wallet">
           {isConnected ? <><span className="pill">{shortAddr(address)}</span><button className="btn ghost" onClick={() => disconnect()}>Disconnect</button></> :
           <button className="btn" disabled={connecting || !connectors[0]} onClick={() => connect({ connector: connectors[0] })}>Connect wallet</button>}
@@ -31,8 +44,12 @@ export function AppShell() {
       <main className="app-body"><div className="page-shell">
         {wrongNetwork && <div className="warn">Wrong network. Switch to {net.label} (chain {net.chainId}) to continue.<button className="btn" disabled={switching} onClick={() => switchChain({ chainId: net.chainId })}>Switch network</button></div>}
         <Routes>
-          <Route path="/" element={<PoolLiquidity />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/" element={<Markets />} />
+          <Route path="/markets" element={<Markets />} />
+          <Route path="/markets/:marketId" element={<Markets />} />
+          <Route path="/borrow" element={<Navigate to="/markets" replace />} />
+          <Route path="/assets" element={<Loans address={address} />} />
+          <Route path="*" element={<Navigate to="/markets" replace />} />
         </Routes>
       </div></main>
     </div>
