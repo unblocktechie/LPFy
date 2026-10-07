@@ -3,8 +3,7 @@ export type AppTab =
 	| 'assets'
 	| 'admin'
 	| 'price'
-	| 'liquidate'
-	| 'baseVal';
+	| 'liquidate';
 
 /** Map legacy `#hash` URLs to path routes. */
 export function pathFromLegacyHash(hash: string): string | null {
@@ -25,7 +24,6 @@ export function pathFromLegacyHash(hash: string): string | null {
 	if (key === 'admin') return '/admin';
 	if (key === 'price') return '/price';
 	if (key === 'liquidate') return '/liquidate';
-	if (key === 'baseVal') return '/base';
 	return null;
 }
 
@@ -35,7 +33,6 @@ export function tabFromPath(pathname: string): AppTab {
 	if (pathname.startsWith('/admin')) return 'admin';
 	if (pathname.startsWith('/price')) return 'price';
 	if (pathname.startsWith('/liquidate')) return 'liquidate';
-	if (pathname.startsWith('/base')) return 'baseVal';
 	return 'markets';
 }
 
@@ -47,6 +44,5 @@ export function pageTitleFromPath(pathname: string): string {
 	if (pathname.startsWith('/liquidate')) return 'LPFY - Liquidate';
 	if (pathname.startsWith('/admin')) return 'LPFY - Admin';
 	if (pathname.startsWith('/price')) return 'LPFY - Price';
-	if (pathname.startsWith('/base')) return 'LPFY - Base';
 	return 'LPFY | Unlock your locked liquidity';
 }

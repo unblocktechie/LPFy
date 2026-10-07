@@ -1,4 +1,4 @@
-# Frontend — LPFY Markets
+# Web — LPFY Markets
 
 React + Vite interface for LPFY Markets. The application connects to the deployed lending contracts and provides market discovery, ERC-4626 supply flows, LP-NFT-backed borrowing, pool liquidity metrics, and wallet position management.
 
@@ -39,7 +39,7 @@ The Assets view reads the connected wallet's lending positions and loans, includ
 ## Run locally
 
 ```bash
-cd frontend
+cd web
 cp .env.example .env
 npm ci
 npm run dev
@@ -61,7 +61,19 @@ VITE_SEPOLIA_V4_ADAPTER=
 VITE_SEPOLIA_USDC=
 VITE_SEPOLIA_BORROW_RATES=
 VITE_SEPOLIA_APY_SOURCE=
+VITE_SEPOLIA_USDT=
+VITE_SEPOLIA_WBTC=
+VITE_SEPOLIA_CRE_RECEIVER=
+VITE_SEPOLIA_VAULT_USDC_WETH=
+VITE_SEPOLIA_VAULT_USDC_USDT=
+VITE_SEPOLIA_VAULT_USDC_WBTC=
 ```
+
+Prefer live `vaultOf(pairId)` on-chain; env vaults are fallbacks. Restart Vite after changes.
+
+## Pairs
+
+Isolated pools + vaults: **USDC/WETH**, **USDC/USDT**, **USDC/WBTC**.
 
 ## Source layout
 
@@ -72,6 +84,7 @@ src/
 │   ├── supply/
 │   ├── borrow/
 │   ├── loans/
+│   ├── liquidate/
 │   ├── positions/
 │   └── pool/
 ├── components/
@@ -88,5 +101,3 @@ src/
 npm run build
 npm run preview
 ```
-
-Netlify deployment settings are defined in `netlify.toml`.
