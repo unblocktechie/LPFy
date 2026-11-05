@@ -25,4 +25,16 @@ contract PairVaultFactory is Ownable {
         market = IMarketVaultRegistry(market_);
     }
 
+    function createVault(bytes32 pairId, string calldata name_, string calldata symbol_)
+        external
+        onlyOwner
+        returns (address vault)
+    {
+        if (vaultOf[pairId] != address(0)) revert VaultExists(pairId);
+        PairVault v = new PairVault(asset, address(market), pairId, name_, symbol_);
+        vault = address(v);
+        vaultOf[pairId] = vault;
+        market.setVault(pairId, vault);
+        emit VaultCreated(pairId, vault, name_, symbol_);
+    }
 }

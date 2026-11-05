@@ -14,11 +14,11 @@ import {IMarketVaultAccounting} from "../interfaces/IMarketVaultAccounting.sol";
 /// @title PairVault — ERC-4626 USDC vault for one lending pair
 /// @notice Idle USDC sits here. Market pulls on borrow and pushes on repay.
 ///         `totalAssets` = idle balance + principal/interest owed by the market.
-contract PairVault is ERC4626 {
+contract PairVault is ERC4626, IPairVault {
     using SafeERC20 for IERC20;
 
-    address public immutable market;
-    bytes32 public immutable pairId;
+    address public immutable override market;
+    bytes32 public immutable override pairId;
 
     error NotMarket(address caller);
     error ZeroAddress();
@@ -42,16 +42,27 @@ contract PairVault is ERC4626 {
     }
 
     /// @inheritdoc IPairVault
-    function idleAssets() public view returns (uint256) {
+    function idleAssets() public view override returns (uint256) {
         return IERC20(asset()).balanceOf(address(this));
     }
 
     /// @inheritdoc ERC4626
-    function totalAssets() public view override returns (uint256) {
-        return idleAssets();
+    function totalAssets() public view override(ERC4626, IERC4626) returns (uint256) {
+        return idleAssets() + IMarketVaultAccounting(market).assetsOwedToVault(pairId);
     }
 
     /// @dev Lenders can only withdraw idle cash, not assets currently lent out.
     /// @inheritdoc IPairVault
+    function pullLiquidity(uint256 assets, address to) external override onlyMarket {
+        if (assets == 0) return;
+        uint256 idle = idleAssets();
+        if (assets > idle) revert InsufficientIdle(assets, idle);
+        IERC20(asset()).safeTransfer(to, assets);
+    }
+
     /// @inheritdoc IPairVault
+    function pushLiquidity(uint256 assets) external override onlyMarket {
+        if (assets == 0) return;
+        IERC20(asset()).safeTransferFrom(msg.sender, address(this), assets);
+    }
 }

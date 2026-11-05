@@ -13,7 +13,7 @@ import {AggregatorV3Interface} from "./interfaces/AggregatorV3Interface.sol";
 /// @notice Values LP NFTs for lending: Uniswap pool amounts × live Chainlink USD.
 /// @dev Debt conversion uses the debt token's Chainlink price and ERC-20 decimals
 ///      (USDC/USDT are 6). There is no 1:1 mock-stable peg.
-contract ValuationOracle is Ownable {
+contract ValuationOracle is IValuationOracle, Ownable {
     uint256 public constant PRICE_SCALE = 1e8;
     uint256 public maxPriceAge = 1 hours;
     /// @notice Max allowed divergence between pool price and Chainlink-implied price (bps). 0 = disable.
@@ -82,6 +82,31 @@ contract ValuationOracle is Ownable {
     function _tokenDecimals(address token) internal view returns (uint8) {
         if (token == address(0)) return 18;
         return IERC20Metadata(token).decimals();
+    }
+
+    function getPositionValueUsd(LendingTypes.ProtocolVersion version, uint256 tokenId)
+        external
+        view
+        returns (uint256 valueUsd)
+    {
+        IPositionAdapter adapter = adapters[version];
+        if (address(adapter) == address(0)) revert AdapterNotSet();
+
+        (address token0, address token1,,,,) = adapter.getPositionMeta(tokenId);
+
+        uint256 price0 = getTokenPriceUsd(token0);
+        uint256 price1 = getTokenPriceUsd(token1);
+
+        // Amounts from current pool price (matches Uniswap UI composition)
+        uint160 poolSqrtPriceX96 = adapter.getPoolSqrtPriceX96(tokenId);
+
+        (uint256 amount0, uint256 amount1) = adapter.getAmountsForValuation(tokenId, poolSqrtPriceX96);
+
+        uint8 dec0 = _tokenDecimals(token0);
+        uint8 dec1 = _tokenDecimals(token1);
+
+        // USD value from Chainlink (real USD), not the pool's implied ETH price
+        valueUsd = (amount0 * price0) / (10 ** dec0) + (amount1 * price1) / (10 ** dec1);
     }
 
     function convertUsdToDebtAsset(address debtAsset, uint256 valueUsd)

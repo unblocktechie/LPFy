@@ -95,4 +95,46 @@ contract V3Adapter is IERC721Receiver, Ownable {
         poolId = PoolId.v3PoolId(token0, token1, fee);
     }
 
+    function getPoolSqrtPriceX96(uint256 tokenId) external view returns (uint160 sqrtPriceX96) {
+        (,, address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper,,,,,) =
+            npm.positions(tokenId);
+
+        // Test/local fallback when factory is not set
+        if (address(factory) == address(0)) {
+            int24 mid = tickLower + (tickUpper - tickLower) / 2;
+            return TickMath.getSqrtRatioAtTick(mid);
+        }
+
+        address pool = factory.getPool(token0, token1, fee);
+        if (pool == address(0)) revert PoolNotFound();
+        (sqrtPriceX96,,,,,,) = IUniswapV3Pool(pool).slot0();
+    }
+
+    function getAmountsForValuation(uint256 tokenId, uint160 sqrtPriceX96)
+        external
+        view
+        returns (uint256 amount0, uint256 amount1)
+    {
+        (
+            ,
+            ,
+            ,
+            ,
+            ,
+            int24 tickLower,
+            int24 tickUpper,
+            uint128 liquidity,
+            ,
+            ,
+            uint128 tokensOwed0,
+            uint128 tokensOwed1
+        ) = npm.positions(tokenId);
+        uint160 sqrtA = TickMath.getSqrtRatioAtTick(tickLower);
+        uint160 sqrtB = TickMath.getSqrtRatioAtTick(tickUpper);
+        (amount0, amount1) =
+            LiquidityAmounts.getAmountsForLiquidity(sqrtPriceX96, sqrtA, sqrtB, liquidity);
+        // include uncollected fees
+        amount0 += tokensOwed0;
+        amount1 += tokensOwed1;
+    }
 }

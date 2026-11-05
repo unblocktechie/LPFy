@@ -19,6 +19,10 @@ contract BorrowRateConfig is IBorrowRateConfig, Ownable {
         // Pairs are network-specific — configure via setPair (see deploy scripts).
     }
 
+    function setPair(address tokenA, address tokenB, uint16 aprBps, bool enabled) external onlyOwner {
+        _setPair(tokenA, tokenB, aprBps, enabled);
+    }
+
     function getBorrowAprBps(bytes32 pairId) external view returns (uint16) {
         return borrowAprBps[pairId];
     }
@@ -31,4 +35,14 @@ contract BorrowRateConfig is IBorrowRateConfig, Ownable {
         return PairId.id(tokenA, tokenB);
     }
 
+    function _setPair(address tokenA, address tokenB, uint16 aprBps, bool enabled) internal {
+        // Allow address(0) = native ETH (Uniswap V4). Both-zero is invalid.
+        if (tokenA == address(0) && tokenB == address(0)) revert ZeroAddress();
+        if (tokenA == tokenB) revert ZeroAddress();
+        if (aprBps > 10_000) revert InvalidApr();
+        bytes32 pid = PairId.id(tokenA, tokenB);
+        borrowAprBps[pid] = aprBps;
+        supported[pid] = enabled;
+        emit PairConfigured(pid, tokenA, tokenB, aprBps, enabled);
+    }
 }

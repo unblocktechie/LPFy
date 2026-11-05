@@ -395,6 +395,44 @@ contract MarketLendingModule is
         return (shares * totalAssets(pairId)) / shareSupply;
     }
 
+    function previewBorrow(LendingTypes.ProtocolVersion version, uint256 tokenId)
+        external
+        view
+        returns (
+            bytes32 pairId,
+            uint16 borrowAprBps,
+            uint16 lenderApyBps,
+            uint256 collateralValueUsd,
+            uint256 maxBorrowUsdc,
+            uint256 poolAvailable
+        )
+    {
+        IPositionAdapter adapter = _adapter(version);
+        (address token0, address token1,,,,) = adapter.getPositionMeta(tokenId);
+        pairId = PairId.id(token0, token1);
+        if (!borrowRateConfig.isPairSupported(pairId)) revert PairNotSupported(pairId);
+        borrowAprBps = borrowRateConfig.getBorrowAprBps(pairId);
+        lenderApyBps = getLenderApyBps(pairId);
+
+        collateralValueUsd = oracle.getPositionValueUsd(version, tokenId);
+        uint256 borrowableUsd = (collateralValueUsd * ltvBpsOf(pairId)) / 10_000;
+        maxBorrowUsdc = oracle.convertUsdToDebtAsset(address(usdc), borrowableUsd);
+        poolAvailable = availableToBorrow(pairId);
+        if (maxBorrowUsdc > poolAvailable) maxBorrowUsdc = poolAvailable;
+    }
+
+    function currentDebt(uint256 loanId) public view returns (uint256 principal, uint256 interest, uint256 total) {
+        Loan storage loan = loans[loanId];
+        if (!loan.active) revert LoanInactive(loanId);
+        interest = loan.accruedInterest + _pendingInterest(loan);
+        principal = loan.principal;
+        total = principal + interest;
+    }
+
+    function getBorrowerLoans(address borrower) external view returns (uint256[] memory) {
+        return _borrowerLoans[borrower];
+    }
+
     /// @notice True when live collateral value is below liquidation threshold vs debt.
     /// @notice Dry-run liquidation: estimated recoveries from oracle prices (no state change).
     /// @notice First active loan below liquidation threshold (CRE / keepers scan this).
@@ -458,11 +496,128 @@ contract MarketLendingModule is
     // BORROWER — borrow from the pair pool matching the LP NFT
     // -------------------------------------------------------------------------
 
+    function borrowWithCollateral(
+        LendingTypes.ProtocolVersion version,
+        uint256 tokenId,
+        uint256 amount
+    ) external nonReentrant whenNotPaused returns (uint256 loanId) {
+        loanId = _borrowWithCollateral(version, tokenId, amount);
+    }
+
+    function borrowMore(uint256 loanId, uint256 amount) external nonReentrant whenNotPaused {
+        if (amount == 0) revert ZeroAmount();
+        Loan storage loan = loans[loanId];
+        if (!loan.active) revert LoanInactive(loanId);
+        if (loan.borrower != msg.sender) revert NotBorrower(msg.sender, loan.borrower);
+
+        _accrue(loanId);
+
+        uint256 valueUsd = oracle.getPositionValueUsd(loan.version, loan.tokenId);
+        uint256 maxDebt = oracle.convertUsdToDebtAsset(
+            address(usdc), (valueUsd * ltvBpsOf(loan.pairId)) / 10_000
+        );
+        uint256 newPrincipal = loan.principal + amount;
+        if (newPrincipal + loan.accruedInterest > maxDebt) {
+            revert ExceedsLTV(newPrincipal + loan.accruedInterest, maxDebt);
+        }
+
+        _assertBorrowLiquidity(loan.pairId, amount);
+
+        Pool storage p = pools[loan.pairId];
+        loan.principal = newPrincipal;
+        p.totalPrincipal += amount;
+        _pullFromVault(loan.pairId, amount, msg.sender);
+
+        emit Borrowed(
+            loanId, msg.sender, loan.version, loan.tokenId, loan.pairId, amount, loan.borrowAprBps, valueUsd
+        );
+    }
+
+    function repay(uint256 loanId, uint256 amount) external nonReentrant returns (uint256 paid) {
+        paid = _repay(loanId, amount);
+    }
+
     /// @notice Accrue, repay up to `amount` (use type(uint256).max to clear all), then return NFT.
     /// @dev Prefer this over separate repay + withdrawCollateral to avoid dust from inter-tx accrual.
+    function repayAndWithdraw(uint256 loanId, uint256 amount) external nonReentrant returns (uint256 paid) {
+        Loan storage loan = loans[loanId];
+        if (!loan.active) revert LoanInactive(loanId);
+        if (loan.borrower != msg.sender) revert NotBorrower(msg.sender, loan.borrower);
+
+        paid = _repay(loanId, amount);
+
+        _accrue(loanId);
+        uint256 remaining = loan.principal + loan.accruedInterest;
+        if (remaining != 0) revert DebtRemaining(loanId, remaining);
+
+        loan.active = false;
+        loanIdByPosition[uint8(loan.version)][loan.tokenId] = 0;
+        _adapter(loan.version).withdraw(msg.sender, loan.tokenId);
+        emit CollateralWithdrawn(loanId, msg.sender);
+    }
+
+    function withdrawCollateral(uint256 loanId) external nonReentrant {
+        Loan storage loan = loans[loanId];
+        if (!loan.active) revert LoanInactive(loanId);
+        if (loan.borrower != msg.sender) revert NotBorrower(msg.sender, loan.borrower);
+
+        _accrue(loanId);
+        uint256 remaining = loan.principal + loan.accruedInterest;
+        if (remaining != 0) revert DebtRemaining(loanId, remaining);
+
+        loan.active = false;
+        loanIdByPosition[uint8(loan.version)][loan.tokenId] = 0;
+        _adapter(loan.version).withdraw(msg.sender, loan.tokenId);
+        emit CollateralWithdrawn(loanId, msg.sender);
+    }
+
+    function accrueInterest(uint256 loanId) external {
+        Loan storage loan = loans[loanId];
+        if (!loan.active) revert LoanInactive(loanId);
+        _accrue(loanId);
+    }
+
     // -------------------------------------------------------------------------
     // Internal
     // -------------------------------------------------------------------------
+
+    function _repay(uint256 loanId, uint256 amount) internal returns (uint256 paid) {
+        if (amount == 0) revert ZeroAmount();
+        Loan storage loan = loans[loanId];
+        if (!loan.active) revert LoanInactive(loanId);
+
+        _accrue(loanId);
+
+        uint256 interestDue = loan.accruedInterest;
+        uint256 principalDue = loan.principal;
+        uint256 totalDue = interestDue + principalDue;
+        paid = amount > totalDue ? totalDue : amount;
+
+        usdc.safeTransferFrom(msg.sender, address(this), paid);
+
+        Pool storage p = pools[loan.pairId];
+        uint256 interestPaid;
+        uint256 principalPaid;
+        if (paid <= interestDue) {
+            interestPaid = paid;
+            loan.accruedInterest = interestDue - paid;
+            p.totalAccruedInterest -= interestPaid;
+        } else {
+            interestPaid = interestDue;
+            principalPaid = paid - interestDue;
+            loan.accruedInterest = 0;
+            if (interestPaid > 0) p.totalAccruedInterest -= interestPaid;
+            loan.principal = principalDue - principalPaid;
+            p.totalPrincipal -= principalPaid;
+        }
+        _pushToVault(loan.pairId, paid);
+
+        emit Repaid(loanId, loan.pairId, principalPaid, interestPaid);
+    }
+
+    function _requireSupportedPair(bytes32 pairId) internal view {
+        if (!borrowRateConfig.isPairSupported(pairId)) revert PairNotSupported(pairId);
+    }
 
     function _idleCash(bytes32 pairId) internal view returns (uint256) {
         address vault = vaultOf[pairId];
@@ -474,6 +629,111 @@ contract MarketLendingModule is
         address v = vaultOf[pairId];
         if (v == address(0)) revert VaultNotSet(pairId);
         vault = IPairVault(v);
+    }
+
+    function _pullFromVault(bytes32 pairId, uint256 assets, address to) internal {
+        IPairVault vault = _requireVault(pairId);
+        vault.pullLiquidity(assets, to);
+        emit VaultLiquidityPulled(pairId, to, assets);
+    }
+
+    function _pushToVault(bytes32 pairId, uint256 assets) internal {
+        if (assets == 0) return;
+        IPairVault vault = _requireVault(pairId);
+        usdc.forceApprove(address(vault), assets);
+        vault.pushLiquidity(assets);
+        usdc.forceApprove(address(vault), 0);
+        emit VaultLiquidityPushed(pairId, assets);
+    }
+
+    function _borrowWithCollateral(
+        LendingTypes.ProtocolVersion version,
+        uint256 tokenId,
+        uint256 amount
+    ) internal returns (uint256 loanId) {
+        if (amount == 0) revert ZeroAmount();
+        if (loanIdByPosition[uint8(version)][tokenId] != 0) {
+            revert PositionAlreadyUsed(uint8(version), tokenId);
+        }
+
+        IPositionAdapter adapter = _adapter(version);
+        adapter.deposit(msg.sender, tokenId);
+
+        (address token0, address token1,,,,) = adapter.getPositionMeta(tokenId);
+        bytes32 pairId = PairId.id(token0, token1);
+        _requireSupportedPair(pairId);
+
+        uint16 aprBps = borrowRateConfig.getBorrowAprBps(pairId);
+        uint16 liveLtv = ltvBpsOf(pairId);
+        uint16 liveLt = liquidationThresholdBpsOf(pairId);
+        uint256 valueUsd = oracle.getPositionValueUsd(version, tokenId);
+        uint256 maxDebt = oracle.convertUsdToDebtAsset(
+            address(usdc), (valueUsd * liveLtv) / 10_000
+        );
+        if (amount > maxDebt) revert ExceedsLTV(amount, maxDebt);
+
+        _assertBorrowLiquidity(pairId, amount);
+
+        loanId = nextLoanId++;
+        loans[loanId] = Loan({
+            borrower: msg.sender,
+            version: version,
+            tokenId: tokenId,
+            pairId: pairId,
+            principal: amount,
+            accruedInterest: 0,
+            borrowAprBps: aprBps,
+            lastAccrual: uint64(block.timestamp),
+            // Historical snapshot only — live risk uses ltvBpsOf / liquidationThresholdBpsOf.
+            ltvBps: liveLtv,
+            liquidationThresholdBps: liveLt,
+            active: true
+        });
+        loanIdByPosition[uint8(version)][tokenId] = loanId;
+        _borrowerLoans[msg.sender].push(loanId);
+
+        Pool storage p = pools[pairId];
+        p.totalPrincipal += amount;
+        _pullFromVault(pairId, amount, msg.sender);
+
+        emit Borrowed(loanId, msg.sender, version, tokenId, pairId, amount, aprBps, valueUsd);
+    }
+
+    function _assertBorrowLiquidity(bytes32 pairId, uint256 amount) internal view {
+        uint256 avail = availableToBorrow(pairId);
+        if (amount > avail) revert InsufficientPoolCash(amount, avail);
+
+        Pool storage p = pools[pairId];
+        uint256 idle = _idleCash(pairId);
+        uint256 assetsAfter = idle + p.totalPrincipal + p.totalAccruedInterest;
+        uint256 util = ((p.totalPrincipal + amount) * 10_000) / (assetsAfter == 0 ? 1 : assetsAfter);
+        if (util > maxUtilizationBps) revert ExceedsUtilization(util, maxUtilizationBps);
+    }
+
+    function _accrue(uint256 loanId) internal {
+        Loan storage loan = loans[loanId];
+        uint256 pending = _pendingInterest(loan);
+        if (pending == 0) {
+            loan.lastAccrual = uint64(block.timestamp);
+            return;
+        }
+        loan.accruedInterest += pending;
+        pools[loan.pairId].totalAccruedInterest += pending;
+        loan.lastAccrual = uint64(block.timestamp);
+        emit InterestAccrued(loanId, loan.pairId, pending);
+    }
+
+    function _pendingInterest(Loan storage loan) internal view returns (uint256) {
+        if (loan.principal == 0 || loan.borrowAprBps == 0) return 0;
+        uint256 dt = block.timestamp - uint256(loan.lastAccrual);
+        if (dt == 0) return 0;
+        return (loan.principal * uint256(loan.borrowAprBps) * dt)
+            / (10_000 * MarketsConfig.SECONDS_PER_YEAR);
+    }
+
+    function _adapter(LendingTypes.ProtocolVersion version) internal view returns (IPositionAdapter a) {
+        a = adapters[version];
+        if (address(a) == address(0)) revert AdapterMissing();
     }
 
     /// @dev Convert a token balance to USDC. Identity if already USDC; otherwise swap via V3 router.
