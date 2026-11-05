@@ -1,0 +1,28 @@
+{
+  "name": "lpfy-contracts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LPFY smart contracts (Hardhat) — MarketLendingModule, PairVault, adapters, CRE receiver",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:sepolia": "hardhat run scripts/deploy-all-sepolia.js --network sepolia",
+    "deploy:fee-router": "hardhat run scripts/deploy-fee-fallback-router.js --network sepolia",
+    "redeploy:sepolia": "hardhat run scripts/redeploy-market-per-pair-sepolia.js --network sepolia",
+    "verify:sepolia": "hardhat run scripts/verify-sepolia-markets.js --network sepolia",
+    "set:risk": "hardhat run scripts/set-risk-params.js --network sepolia",
+    "set:fee-to": "hardhat run scripts/set-fee-to.js --network sepolia",
+    "set:liquidation-fee": "hardhat run scripts/set-liquidation-fee.js --network sepolia",
+    "keeper:local": "hardhat run scripts/run-liquidation-keeper-local.js --network sepolia",
+    "diagnose:liquidation": "hardhat run scripts/diagnose-liquidation.js --network sepolia",
+    "sync:addresses": "node scripts/sync-addresses.js"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "dotenv": "^16.4.7",
+    "hardhat": "^2.22.17"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "5.0.2"
+  }
+}
