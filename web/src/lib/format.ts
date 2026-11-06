@@ -11,6 +11,14 @@ export function formatUsd8(value?: bigint) {
   return n.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 2 });
 }
 
+export function formatHealth(hfWad?: bigint) {
+  if (hfWad === undefined) return "—";
+  if (hfWad > 10n ** 36n) return "∞";
+  const n = Number(hfWad) / 1e18;
+  if (!Number.isFinite(n)) return "∞";
+  return n.toFixed(2);
+}
+
 export function formatAmount(value: bigint | undefined, decimals: number) {
   if (value === undefined) return "—";
   if (value === 0n) return "0";
@@ -42,3 +50,7 @@ export function formatPoolFee(fee?: number | bigint) {
   return `${(n / 10_000).toFixed(2)}%`;
 }
 
+export function formatLtvBps(bps?: number | bigint) {
+  if (bps === undefined) return undefined;
+  return `${Number(bps) / 100}%`;
+}

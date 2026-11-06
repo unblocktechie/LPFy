@@ -31,7 +31,6 @@ export function MaybeLoading({
   fallback?: ReactNode;
 }) {
   if (loading) return <LoadingText />;
-  if (children == null) return <>{fallback}</>;
-  
+  if (children === undefined || children === null || children === "") return <>{fallback}</>;
   return <>{children}</>;
 }

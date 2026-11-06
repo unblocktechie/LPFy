@@ -1,5 +1,16 @@
 import { formatUnits, parseUnits } from 'viem';
-import { formatAmount } from './format';
+import { debtAmountToUsd8, formatAmount, formatUsd8 } from './format';
+
+export function formatDebtWithUsd(
+	amount: bigint | undefined,
+	decimals: number,
+	symbol: string,
+) {
+	if (amount === undefined) return undefined;
+	return `${formatAmount(amount, decimals)} ${symbol} ≈ ${formatUsd8(
+		debtAmountToUsd8(amount, decimals),
+	)}`;
+}
 
 export function toInputAmount(value: bigint, decimals: number) {
 	const s = formatUnits(value, decimals);
