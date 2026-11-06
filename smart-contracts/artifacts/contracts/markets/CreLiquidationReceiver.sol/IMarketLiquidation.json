@@ -1,0 +1,42 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IMarketLiquidation",
+  "sourceName": "contracts/markets/CreLiquidationReceiver.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "findFirstLiquidatableLoan",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "found",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "loanId",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "loanId",
+          "type": "uint256"
+        }
+      ],
+      "name": "liquidate",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

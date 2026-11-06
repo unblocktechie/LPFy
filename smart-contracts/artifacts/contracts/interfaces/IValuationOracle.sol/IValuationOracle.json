@@ -1,0 +1,78 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IValuationOracle",
+  "sourceName": "contracts/interfaces/IValuationOracle.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "debtAsset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "valueUsd",
+          "type": "uint256"
+        }
+      ],
+      "name": "convertUsdToDebtAsset",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "enum LendingTypes.ProtocolVersion",
+          "name": "version",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getPositionValueUsd",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "valueUsd",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "getTokenPriceUsd",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "priceUsd",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

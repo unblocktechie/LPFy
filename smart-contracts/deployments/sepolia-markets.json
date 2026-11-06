@@ -1,0 +1,106 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "deployer": "0x0B980AbE165CBac006090A6500CEB9268197d6de",
+  "deployedAt": "2026-11-06T04:25:49.076Z",
+  "note": "Fresh Circle USDC + ERC-4626 PairVaults + per-pair LTV/LT. All LPFY contracts newly deployed.",
+  "contracts": {
+    "marketLendingModule": "0x618a17C71b1D3922172E1b77D6e3D17704DE9f41",
+    "borrowRateConfig": "0x96ff2ce7B8AEfEadCAF460f41af613e7640AE20B",
+    "staticApySource": "0x02874283bd490350Ace341bc9Cdd4E7A686CB4E1",
+    "oracle": "0x16E03515cf524B5D0D0db6E44F342ef0af7301e3",
+    "v3Adapter": "0x48ee590E073f5ae2FDFCEA465e6281115308dDc9",
+    "v4Adapter": "0x646DB0572422424947262fC3Bda2940f51504759",
+    "creLiquidationReceiver": "0x32866b81408d0260259BC0109b9F0a300Cdca132",
+    "feeFallbackSwapRouter": "0xEB66D88296C1694d79D578A700cb4EE0d6dC8baf",
+    "debtAsset": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "debtAssetDecimals": 6,
+    "debtAssetSymbol": "USDC",
+    "pairVaults": {
+      "0x82995a7c2ee0a46f82c3c841a92f4b4ef42e49cfab7ca6d6dcd6aa694cf64db4": "0xE47ABe4b88Fa2F47f4913710e8ecfBDE1205A5dc",
+      "0xb6eb962ee4494c3528e1c150e0d32b2efca3838f2ecbfbd226e637b3208b7541": "0x9cf1CF796147DD6c4Ff2f57E91F67fe14397d8eF",
+      "0x264c622573cd31c6ddc5fb84a05d69ea65648547fda5ccd6d5a859e47bb1af4e": "0xE374DEF41E1c63d54FFeB7B4a3fbA554574A4F84"
+    }
+  },
+  "external": {
+    "uniswapV3Npm": "0x1238536071E1c677A632429e3655c799b22cDA52",
+    "factory": "0x0227628f3F023bb0B980b67D528571c95c6DaC1c",
+    "weth": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+    "circleUsdc": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "usdt": "0xE699A7254f05f93a539120BA640bf2D1C87b48f1",
+    "wbtc": "0x65bBDdD937C4CE8aCf308c0787b857664616BC2c",
+    "ethUsd": "0x694AA1769357215DE4FAC081bf1f309aDC325306",
+    "usdcUsd": "0xA2F78ab2355fe2f984D808B5CeE7FD0A93D5270E",
+    "btcUsd": "0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43",
+    "v4Npm": "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
+    "v4StateView": "0xE1Dd9c3fA50EDB962E442f60DfBc432e24537E4C",
+    "swapRouter02": "0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E",
+    "swapRouter02Live": "0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E",
+    "creForwarder": "0x15fC6ae953E024d975e77382eEeC56A9101f9F88"
+  },
+  "risk": {
+    "defaultLtvBps": 5000,
+    "defaultLiquidationThresholdBps": 6500,
+    "liquidationFeeBps": 0,
+    "feeTo": "0x0B980AbE165CBac006090A6500CEB9268197d6de",
+    "pairs": {
+      "USDC/WETH": {
+        "pairId": "0x82995a7c2ee0a46f82c3c841a92f4b4ef42e49cfab7ca6d6dcd6aa694cf64db4",
+        "ltvBps": 5000,
+        "liquidationThresholdBps": 6500
+      },
+      "USDC/USDT": {
+        "pairId": "0xb6eb962ee4494c3528e1c150e0d32b2efca3838f2ecbfbd226e637b3208b7541",
+        "ltvBps": 5000,
+        "liquidationThresholdBps": 6500
+      },
+      "USDC/WBTC": {
+        "pairId": "0x264c622573cd31c6ddc5fb84a05d69ea65648547fda5ccd6d5a859e47bb1af4e",
+        "ltvBps": 5000,
+        "liquidationThresholdBps": 6500
+      }
+    }
+  },
+  "pairsEnabled": [
+    {
+      "a": "USDC",
+      "b": "WETH",
+      "aprBps": 600,
+      "lenderApyBps": 500,
+      "pairId": "0x82995a7c2ee0a46f82c3c841a92f4b4ef42e49cfab7ca6d6dcd6aa694cf64db4",
+      "vault": "0xE47ABe4b88Fa2F47f4913710e8ecfBDE1205A5dc"
+    },
+    {
+      "a": "USDC",
+      "b": "USDT",
+      "aprBps": 500,
+      "lenderApyBps": 400,
+      "pairId": "0xb6eb962ee4494c3528e1c150e0d32b2efca3838f2ecbfbd226e637b3208b7541",
+      "vault": "0x9cf1CF796147DD6c4Ff2f57E91F67fe14397d8eF"
+    },
+    {
+      "a": "USDC",
+      "b": "WBTC",
+      "aprBps": 650,
+      "lenderApyBps": 550,
+      "pairId": "0x264c622573cd31c6ddc5fb84a05d69ea65648547fda5ccd6d5a859e47bb1af4e",
+      "vault": "0xE374DEF41E1c63d54FFeB7B4a3fbA554574A4F84"
+    }
+  ],
+  "webEnv": {
+    "VITE_NETWORK": "sepolia",
+    "VITE_SEPOLIA_MARKET_MODULE": "0x618a17C71b1D3922172E1b77D6e3D17704DE9f41",
+    "VITE_SEPOLIA_ORACLE": "0x16E03515cf524B5D0D0db6E44F342ef0af7301e3",
+    "VITE_SEPOLIA_V3_ADAPTER": "0x48ee590E073f5ae2FDFCEA465e6281115308dDc9",
+    "VITE_SEPOLIA_V4_ADAPTER": "0x646DB0572422424947262fC3Bda2940f51504759",
+    "VITE_SEPOLIA_USDC": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "VITE_SEPOLIA_BORROW_RATES": "0x96ff2ce7B8AEfEadCAF460f41af613e7640AE20B",
+    "VITE_SEPOLIA_APY_SOURCE": "0x02874283bd490350Ace341bc9Cdd4E7A686CB4E1",
+    "VITE_SEPOLIA_USDT": "0xE699A7254f05f93a539120BA640bf2D1C87b48f1",
+    "VITE_SEPOLIA_WBTC": "0x65bBDdD937C4CE8aCf308c0787b857664616BC2c",
+    "VITE_SEPOLIA_CRE_RECEIVER": "0x32866b81408d0260259BC0109b9F0a300Cdca132",
+    "VITE_SEPOLIA_VAULT_USDC_WETH": "0xE47ABe4b88Fa2F47f4913710e8ecfBDE1205A5dc",
+    "VITE_SEPOLIA_VAULT_USDC_USDT": "0x9cf1CF796147DD6c4Ff2f57E91F67fe14397d8eF",
+    "VITE_SEPOLIA_VAULT_USDC_WBTC": "0xE374DEF41E1c63d54FFeB7B4a3fbA554574A4F84"
+  }
+}

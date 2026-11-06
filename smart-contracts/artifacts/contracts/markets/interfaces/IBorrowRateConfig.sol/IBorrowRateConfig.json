@@ -1,0 +1,49 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IBorrowRateConfig",
+  "sourceName": "contracts/markets/interfaces/IBorrowRateConfig.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "pairId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getBorrowAprBps",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "aprBps",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "pairId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "isPairSupported",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

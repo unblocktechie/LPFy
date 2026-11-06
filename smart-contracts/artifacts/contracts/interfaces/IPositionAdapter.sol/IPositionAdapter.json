@@ -1,0 +1,220 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IPositionAdapter",
+  "sourceName": "contracts/interfaces/IPositionAdapter.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "deposit",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint160",
+          "name": "sqrtPriceX96",
+          "type": "uint160"
+        }
+      ],
+      "name": "getAmountsForValuation",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount0",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount1",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getPoolSqrtPriceX96",
+      "outputs": [
+        {
+          "internalType": "uint160",
+          "name": "sqrtPriceX96",
+          "type": "uint160"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getPositionMeta",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "token0",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "token1",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "poolId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "int24",
+          "name": "tickLower",
+          "type": "int24"
+        },
+        {
+          "internalType": "int24",
+          "name": "tickUpper",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint128",
+          "name": "liquidity",
+          "type": "uint128"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "owns",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "protocolVersion",
+      "outputs": [
+        {
+          "internalType": "enum LendingTypes.ProtocolVersion",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "tokenRecipient",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "nftRecipient",
+          "type": "address"
+        }
+      ],
+      "name": "unwind",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "token0",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "token1",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount0",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount1",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint24",
+          "name": "fee",
+          "type": "uint24"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "withdraw",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

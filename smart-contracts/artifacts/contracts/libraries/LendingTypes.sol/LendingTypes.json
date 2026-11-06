@@ -1,0 +1,10 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "LendingTypes",
+  "sourceName": "contracts/libraries/LendingTypes.sol",
+  "abi": [],
+  "bytecode": "0x60808060405234601757603a9081601d823930815050f35b600080fdfe600080fdfea264697066735822122008ea4c991b783eb1b000e74bb5aa96a1f96d63b19815e414fc2073d1d252053864736f6c63430008180033",
+  "deployedBytecode": "0x600080fdfea264697066735822122008ea4c991b783eb1b000e74bb5aa96a1f96d63b19815e414fc2073d1d252053864736f6c63430008180033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

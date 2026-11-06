@@ -1,0 +1,10 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "PoolId",
+  "sourceName": "contracts/libraries/PoolId.sol",
+  "abi": [],
+  "bytecode": "0x60808060405234601757603a9081601d823930815050f35b600080fdfe600080fdfea2646970667358221220a1fdbec9badd45eec53e43be7d715788f581dc5771d15366640b9070f0849fe964736f6c63430008180033",
+  "deployedBytecode": "0x600080fdfea2646970667358221220a1fdbec9badd45eec53e43be7d715788f581dc5771d15366640b9070f0849fe964736f6c63430008180033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

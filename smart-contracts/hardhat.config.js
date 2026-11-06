@@ -55,4 +55,9 @@ module.exports = {
 			chainId: 11155111,
 		},
 	},
+	// Etherscan API V2 — use a single key (not per-network map).
+	// https://docs.etherscan.io/v2-migration
+	etherscan: {
+		apiKey: process.env.ETHERSCAN_API_KEY || '',
+	},
 };

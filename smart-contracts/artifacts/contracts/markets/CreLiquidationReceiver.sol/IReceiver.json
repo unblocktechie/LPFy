@@ -1,0 +1,48 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IReceiver",
+  "sourceName": "contracts/markets/CreLiquidationReceiver.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "metadata",
+          "type": "bytes"
+        },
+        {
+          "internalType": "bytes",
+          "name": "report",
+          "type": "bytes"
+        }
+      ],
+      "name": "onReport",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "supportsInterface",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

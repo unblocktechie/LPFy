@@ -1,0 +1,30 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IApySource",
+  "sourceName": "contracts/markets/interfaces/IApySource.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "marketId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getLenderApyBps",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "apyBps",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

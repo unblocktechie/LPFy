@@ -3,7 +3,6 @@ node_modules/
 
 # Hardhat build
 cache/
-artifacts/
 typechain/
 typechain-types/
 coverage/
