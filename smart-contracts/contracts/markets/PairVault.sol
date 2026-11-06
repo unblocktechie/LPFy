@@ -52,6 +52,16 @@ contract PairVault is ERC4626, IPairVault {
     }
 
     /// @dev Lenders can only withdraw idle cash, not assets currently lent out.
+    function maxWithdraw(address owner_) public view override(ERC4626, IERC4626) returns (uint256) {
+        uint256 ownerAssets = _convertToAssets(balanceOf(owner_), Math.Rounding.Floor);
+        uint256 idle = idleAssets();
+        return ownerAssets < idle ? ownerAssets : idle;
+    }
+
+    function maxRedeem(address owner_) public view override(ERC4626, IERC4626) returns (uint256) {
+        return _convertToShares(maxWithdraw(owner_), Math.Rounding.Floor);
+    }
+
     /// @inheritdoc IPairVault
     function pullLiquidity(uint256 assets, address to) external override onlyMarket {
         if (assets == 0) return;

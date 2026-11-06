@@ -58,6 +58,12 @@ contract ValuationOracle is IValuationOracle, Ownable {
         emit TokenMaxPriceAgeSet(token, age);
     }
 
+    function setMaxPoolDeviationBps(uint16 bps) external onlyOwner {
+        require(bps <= 10_000, "bps");
+        maxPoolDeviationBps = bps;
+        emit MaxPoolDeviationSet(bps);
+    }
+
     function getTokenPriceUsd(address token) public view returns (uint256 priceUsd) {
         AggregatorV3Interface feed = feeds[token];
         if (address(feed) == address(0)) revert FeedNotSet(token);
@@ -100,6 +106,12 @@ contract ValuationOracle is IValuationOracle, Ownable {
         // Amounts from current pool price (matches Uniswap UI composition)
         uint160 poolSqrtPriceX96 = adapter.getPoolSqrtPriceX96(tokenId);
 
+        // Optional sanity: pool price should not diverge too far from Chainlink
+        if (maxPoolDeviationBps > 0) {
+            uint160 oracleSqrtPriceX96 = _sqrtPriceFromUsdPrices(token0, token1, price0, price1);
+            _requireSqrtPriceClose(poolSqrtPriceX96, oracleSqrtPriceX96, maxPoolDeviationBps);
+        }
+
         (uint256 amount0, uint256 amount1) = adapter.getAmountsForValuation(tokenId, poolSqrtPriceX96);
 
         uint8 dec0 = _tokenDecimals(token0);
@@ -120,4 +132,46 @@ contract ValuationOracle is IValuationOracle, Ownable {
         amount = (valueUsd * (10 ** debtDecimals)) / debtPrice;
     }
 
+    function _requireSqrtPriceClose(uint160 a, uint160 b, uint16 maxBps) internal pure {
+        if (a == 0 || b == 0) revert PoolPriceDeviation();
+        uint256 hi = uint256(a) > uint256(b) ? uint256(a) : uint256(b);
+        uint256 lo = uint256(a) > uint256(b) ? uint256(b) : uint256(a);
+        // compare squares roughly via ratio of sqrt prices: |a-b|/b <= maxBps/10000
+        uint256 diffBps = ((hi - lo) * 10_000) / lo;
+        if (diffBps > maxBps) revert PoolPriceDeviation();
+    }
+
+    function _sqrtPriceFromUsdPrices(address token0, address token1, uint256 price0Usd, uint256 price1Usd)
+        internal
+        view
+        returns (uint160)
+    {
+        uint8 dec0 = _tokenDecimals(token0);
+        uint8 dec1 = _tokenDecimals(token1);
+        require(price1Usd > 0, "den");
+
+        uint256 priceX96 = FullMath.mulDiv(price0Usd, 10 ** uint256(dec1), price1Usd);
+        priceX96 = FullMath.mulDiv(priceX96, uint256(1) << 96, 10 ** uint256(dec0));
+
+        uint256 sqrtRatio = _sqrt(FullMath.mulDiv(priceX96, uint256(1) << 96, 1));
+        require(sqrtRatio <= type(uint160).max, "overflow");
+
+        if (sqrtRatio < TickMath.getSqrtRatioAtTick(TickMath.MIN_TICK)) {
+            return TickMath.getSqrtRatioAtTick(TickMath.MIN_TICK);
+        }
+        if (sqrtRatio >= TickMath.getSqrtRatioAtTick(TickMath.MAX_TICK)) {
+            return TickMath.getSqrtRatioAtTick(TickMath.MAX_TICK - 1);
+        }
+        return uint160(sqrtRatio);
+    }
+
+    function _sqrt(uint256 x) internal pure returns (uint256 z) {
+        if (x == 0) return 0;
+        z = x;
+        uint256 y = (x + 1) / 2;
+        while (y < z) {
+            z = y;
+            y = (x / y + y) / 2;
+        }
+    }
 }

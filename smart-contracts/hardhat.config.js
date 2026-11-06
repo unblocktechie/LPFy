@@ -9,6 +9,11 @@ if (fs.existsSync(envPath)) dotenv.config({ path: envPath });
 
 const { rpc } = require('./config/rpc');
 
+let PRIVATE_KEY = (process.env.PRIVATE_KEY || '').trim();
+if (PRIVATE_KEY && !PRIVATE_KEY.startsWith('0x')) {
+	PRIVATE_KEY = `0x${PRIVATE_KEY}`;
+}
+
 const forkEnabled = process.env.HARDHAT_FORK === '1' && !!rpc.mainnet;
 
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -43,6 +48,11 @@ module.exports = {
 		localhost: {
 			url: rpc.localhost,
 			chainId: 31337,
+		},
+		sepolia: {
+			url: rpc.sepolia,
+			accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+			chainId: 11155111,
 		},
 	},
 };

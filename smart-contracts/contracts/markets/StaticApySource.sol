@@ -25,6 +25,12 @@ contract StaticApySource is IApySource, Ownable {
         emit DefaultApySet(bps);
     }
 
+    function setApyBps(bytes32 marketId, uint16 bps) external onlyOwner {
+        if (bps > 10_000) revert InvalidApy();
+        apyBps[marketId] = bps;
+        emit ApySet(marketId, bps);
+    }
+
     function getLenderApyBps(bytes32 marketId) external view returns (uint16) {
         uint16 configured = apyBps[marketId];
         return configured == 0 ? defaultApyBps : configured;

@@ -14,7 +14,7 @@ import {IV4PositionManager, IV4StateView, IWETH9} from "../interfaces/IUniswapV4
 
 /// @notice Holds Uniswap V4 LP NFTs and exposes position meta / amounts.
 /// @dev When `positionManager` is address(0), falls back to owner `registerPosition` (unit tests).
-contract V4Adapter is IERC721Receiver, Ownable {
+contract V4Adapter is IPositionAdapter, IERC721Receiver, Ownable {
     using SafeERC20 for IERC20;
 
     /// @dev Uniswap v4-periphery Actions
@@ -167,9 +167,203 @@ contract V4Adapter is IERC721Receiver, Ownable {
     /// @inheritdoc IPositionAdapter
     /// @dev Live: PositionManager.modifyLiquidities(DECREASE_LIQUIDITY + TAKE_PAIR).
     ///      Native currency (address(0)) is wrapped to `weth` before transfer.
+    function unwind(uint256 tokenId, address tokenRecipient, address nftRecipient)
+        external
+        onlyLendingModule
+        returns (address token0, address token1, uint256 amount0, uint256 amount1, uint24 fee)
+    {
+        if (!_held[tokenId] && !registered[tokenId].held) revert NotHeld(tokenId);
+        if (tokenRecipient == address(0) || nftRecipient == address(0)) revert ZeroAddress();
+
+        if (address(positionManager) != address(0)) {
+            return _unwindLive(tokenId, tokenRecipient, nftRecipient);
+        }
+        return _unwindRegistered(tokenId, tokenRecipient, nftRecipient);
+    }
+
     function owns(uint256 tokenId) external view returns (bool) {
         return _held[tokenId] || registered[tokenId].held;
     }
 
+    function getPositionMeta(uint256 tokenId)
+        external
+        view
+        returns (
+            address token0,
+            address token1,
+            bytes32 poolId,
+            int24 tickLower,
+            int24 tickUpper,
+            uint128 liquidity
+        )
+    {
+        return _meta(tokenId);
+    }
+
+    function getAmountsForValuation(uint256 tokenId, uint160 sqrtPriceX96)
+        external
+        view
+        returns (uint256 amount0, uint256 amount1)
+    {
+        (,,, int24 tickLower, int24 tickUpper, uint128 liquidity) = _meta(tokenId);
+        uint160 sqrtA = TickMath.getSqrtRatioAtTick(tickLower);
+        uint160 sqrtB = TickMath.getSqrtRatioAtTick(tickUpper);
+        (amount0, amount1) =
+            LiquidityAmounts.getAmountsForLiquidity(sqrtPriceX96, sqrtA, sqrtB, liquidity);
+
+        if (address(positionManager) == address(0)) {
+            RegisteredPosition memory p = registered[tokenId];
+            amount0 += p.tokensOwed0;
+            amount1 += p.tokensOwed1;
+        }
+    }
+
+    function getPoolSqrtPriceX96(uint256 tokenId) external view returns (uint160 sqrtPriceX96) {
+        if (address(positionManager) != address(0) && address(stateView) != address(0)) {
+            (IV4PositionManager.PoolKey memory key,) = positionManager.getPoolAndPositionInfo(tokenId);
+            bytes32 uniPoolId = _uniswapPoolId(key);
+            (sqrtPriceX96,,,) = stateView.getSlot0(uniPoolId);
+            if (sqrtPriceX96 == 0) revert InvalidPosition();
+            return sqrtPriceX96;
+        }
+
+        (,,, int24 tickLower, int24 tickUpper,) = _meta(tokenId);
+        int24 mid = tickLower + (tickUpper - tickLower) / 2;
+        return TickMath.getSqrtRatioAtTick(mid);
+    }
+
+    function _unwindLive(uint256 tokenId, address tokenRecipient, address nftRecipient)
+        internal
+        returns (address token0, address token1, uint256 amount0, uint256 amount1, uint24 fee)
+    {
+        (IV4PositionManager.PoolKey memory key,) = positionManager.getPoolAndPositionInfo(tokenId);
+        if (key.currency1 == address(0) && key.currency0 == address(0)) revert InvalidPosition();
+
+        fee = key.fee;
+        address currency0 = key.currency0;
+        address currency1 = key.currency1;
+        bool native0 = currency0 == address(0);
+        bool native1 = currency1 == address(0);
+        if ((native0 || native1) && weth == address(0)) revert WethNotSet();
+
+        uint128 liquidity = positionManager.getPositionLiquidity(tokenId);
+
+        uint256 ethBefore = address(this).balance;
+        uint256 c0Before = native0 ? 0 : IERC20(currency0).balanceOf(address(this));
+        uint256 c1Before = native1 ? 0 : IERC20(currency1).balanceOf(address(this));
+
+        bytes memory actions =
+            abi.encodePacked(uint8(DECREASE_LIQUIDITY), uint8(TAKE_PAIR));
+        bytes[] memory params = new bytes[](2);
+        params[0] = abi.encode(tokenId, uint256(liquidity), uint128(0), uint128(0), bytes(""));
+        params[1] = abi.encode(currency0, currency1, address(this));
+
+        positionManager.modifyLiquidities(abi.encode(actions, params), block.timestamp);
+
+        uint256 ethGot = address(this).balance - ethBefore;
+        // Native ETH is always currency0 in canonical V4 pool keys; currency1-native is rare.
+        if (native0 && native1) revert InvalidPosition();
+
+        if (native0) {
+            amount0 = ethGot;
+            if (amount0 > 0) IWETH9(weth).deposit{value: amount0}();
+            token0 = weth;
+            amount1 = IERC20(currency1).balanceOf(address(this)) - c1Before;
+            token1 = currency1;
+        } else if (native1) {
+            amount0 = IERC20(currency0).balanceOf(address(this)) - c0Before;
+            token0 = currency0;
+            amount1 = ethGot;
+            if (amount1 > 0) IWETH9(weth).deposit{value: amount1}();
+            token1 = weth;
+        } else {
+            amount0 = IERC20(currency0).balanceOf(address(this)) - c0Before;
+            amount1 = IERC20(currency1).balanceOf(address(this)) - c1Before;
+            token0 = currency0;
+            token1 = currency1;
+        }
+
+        if (amount0 > 0) IERC20(token0).safeTransfer(tokenRecipient, amount0);
+        if (amount1 > 0) IERC20(token1).safeTransfer(tokenRecipient, amount1);
+
+        _held[tokenId] = false;
+        positionManager.safeTransferFrom(address(this), nftRecipient, tokenId);
+        emit Withdrawn(tokenId, nftRecipient);
+    }
+
+    function _unwindRegistered(uint256 tokenId, address tokenRecipient, address nftRecipient)
+        internal
+        returns (address token0, address token1, uint256 amount0, uint256 amount1, uint24 fee)
+    {
+        RegisteredPosition storage p = registered[tokenId];
+        if (!p.held) revert NotHeld(tokenId);
+
+        token0 = p.token0;
+        token1 = p.token1;
+        fee = p.fee;
+        amount0 = p.tokensOwed0;
+        amount1 = p.tokensOwed1;
+
+        p.tokensOwed0 = 0;
+        p.tokensOwed1 = 0;
+        p.liquidity = 0;
+        p.held = false;
+        _held[tokenId] = false;
+
+        if (amount0 > 0) IERC20(token0).safeTransfer(tokenRecipient, amount0);
+        if (amount1 > 0) IERC20(token1).safeTransfer(tokenRecipient, amount1);
+
+        // No ERC721 in the register path; nftRecipient is recorded via event for parity.
+        emit Withdrawn(tokenId, nftRecipient);
+    }
+
+    function _meta(uint256 tokenId)
+        internal
+        view
+        returns (
+            address token0,
+            address token1,
+            bytes32 poolId,
+            int24 tickLower,
+            int24 tickUpper,
+            uint128 liquidity
+        )
+    {
+        if (address(positionManager) != address(0)) {
+            IV4PositionManager.PoolKey memory key;
+            uint256 info;
+            (key, info) = positionManager.getPoolAndPositionInfo(tokenId);
+            // Canonical V4 keys sort native to currency0; currency1 must be a real token.
+            if (key.currency1 == address(0)) revert InvalidPosition();
+            token0 = key.currency0 == address(0) ? weth : key.currency0;
+            token1 = key.currency1;
+            if (key.currency0 == address(0) && weth == address(0)) token0 = address(0);
+            tickLower = _tickLower(info);
+            tickUpper = _tickUpper(info);
+            liquidity = positionManager.getPositionLiquidity(tokenId);
+            poolId = PoolId.v4PoolId(key.currency0, key.currency1, key.fee, key.tickSpacing, key.hooks);
+        } else {
+            RegisteredPosition memory p = registered[tokenId];
+            if (!p.exists) revert NotRegistered(tokenId);
+            token0 = p.token0;
+            token1 = p.token1;
+            tickLower = p.tickLower;
+            tickUpper = p.tickUpper;
+            liquidity = p.liquidity;
+            poolId = PoolId.v4PoolId(p.token0, p.token1, p.fee, p.tickSpacing, p.hooks);
+        }
+    }
+
+    function _uniswapPoolId(IV4PositionManager.PoolKey memory key) internal pure returns (bytes32) {
+        return keccak256(abi.encode(key.currency0, key.currency1, key.fee, key.tickSpacing, key.hooks));
+    }
+
     /// @dev PositionInfo packing: [200-bit poolId][24-bit tickUpper][24-bit tickLower][8-bit subscriber]
+    function _tickLower(uint256 info) internal pure returns (int24) {
+        return int24(uint24((info >> 8) & 0xFFFFFF));
+    }
+
+    function _tickUpper(uint256 info) internal pure returns (int24) {
+        return int24(uint24((info >> 32) & 0xFFFFFF));
+    }
 }

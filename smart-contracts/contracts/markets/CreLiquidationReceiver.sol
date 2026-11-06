@@ -17,7 +17,7 @@ interface IReceiver is IERC165 {
 /// @notice CRE cron reads `needsUpkeep()`, then writes a report with `abi.encode(loanId)`.
 ///         Only the configured forwarder may call `onReport`. Authorize this contract on the
 ///         market with `MarketLendingModule.setAuthorizedLiquidator(receiver, true)`.
-contract CreLiquidationReceiver is Ownable {
+contract CreLiquidationReceiver is Ownable, IReceiver {
     address public forwarder;
     IMarketLiquidation public market;
 
@@ -53,4 +53,14 @@ contract CreLiquidationReceiver is Ownable {
 
     /// @inheritdoc IReceiver
     /// @dev `report` = abi.encode(uint256 loanId)
+    function onReport(bytes calldata /* metadata */, bytes calldata report) external {
+        if (msg.sender != forwarder) revert InvalidSender(msg.sender, forwarder);
+        uint256 loanId = abi.decode(report, (uint256));
+        emit CreLiquidationRequested(loanId);
+        market.liquidate(loanId);
+    }
+
+    function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
+        return interfaceId == type(IReceiver).interfaceId || interfaceId == type(IERC165).interfaceId;
+    }
 }

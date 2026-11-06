@@ -15,7 +15,7 @@ import {
 } from "../interfaces/IUniswapV3.sol";
 
 /// @notice Holds Uniswap V3 LP NFTs and exposes position meta / amounts
-contract V3Adapter is IERC721Receiver, Ownable {
+contract V3Adapter is IPositionAdapter, IERC721Receiver, Ownable {
     INonfungiblePositionManager public immutable npm;
     IUniswapV3Factory public immutable factory;
     address public lendingModule;
@@ -74,6 +74,43 @@ contract V3Adapter is IERC721Receiver, Ownable {
     }
 
     /// @inheritdoc IPositionAdapter
+    function unwind(uint256 tokenId, address tokenRecipient, address nftRecipient)
+        external
+        onlyLendingModule
+        returns (address token0, address token1, uint256 amount0, uint256 amount1, uint24 fee)
+    {
+        if (!_held[tokenId]) revert NotHeld(tokenId);
+        if (tokenRecipient == address(0) || nftRecipient == address(0)) revert ZeroAddress();
+
+        uint128 liquidity;
+        (,, token0, token1, fee,,, liquidity,,,,) = npm.positions(tokenId);
+
+        if (liquidity > 0) {
+            npm.decreaseLiquidity(
+                INonfungiblePositionManager.DecreaseLiquidityParams({
+                    tokenId: tokenId,
+                    liquidity: liquidity,
+                    amount0Min: 0,
+                    amount1Min: 0,
+                    deadline: block.timestamp
+                })
+            );
+        }
+
+        (amount0, amount1) = npm.collect(
+            INonfungiblePositionManager.CollectParams({
+                tokenId: tokenId,
+                recipient: tokenRecipient,
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
+            })
+        );
+
+        _held[tokenId] = false;
+        npm.safeTransferFrom(address(this), nftRecipient, tokenId);
+        emit Withdrawn(tokenId, nftRecipient);
+    }
+
     function owns(uint256 tokenId) external view returns (bool) {
         return _held[tokenId];
     }

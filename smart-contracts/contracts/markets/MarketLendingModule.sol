@@ -434,9 +434,73 @@ contract MarketLendingModule is
     }
 
     /// @notice True when live collateral value is below liquidation threshold vs debt.
+    function isLiquidatable(uint256 loanId) public view returns (bool) {
+        Loan storage loan = loans[loanId];
+        if (!loan.active) return false;
+        uint256 debt = loan.principal + loan.accruedInterest + _pendingInterest(loan);
+        if (debt == 0) return false;
+        uint256 valueUsd = oracle.getPositionValueUsd(loan.version, loan.tokenId);
+        uint256 thresholdDebt = oracle.convertUsdToDebtAsset(
+            address(usdc), (valueUsd * liquidationThresholdBpsOf(loan.pairId)) / 10_000
+        );
+        return debt > thresholdDebt;
+    }
+
     /// @notice Dry-run liquidation: estimated recoveries from oracle prices (no state change).
+    function previewLiquidation(uint256 loanId)
+        external
+        view
+        returns (
+            bool liquidatable,
+            address token0,
+            address token1,
+            uint256 amount0,
+            uint256 amount1,
+            uint256 estimatedUsdc,
+            uint256 debt,
+            uint256 shortfall
+        )
+    {
+        Loan storage loan = loans[loanId];
+        if (!loan.active) revert LoanInactive(loanId);
+
+        debt = loan.principal + loan.accruedInterest + _pendingInterest(loan);
+        IPositionAdapter adapter = _adapter(loan.version);
+        (token0, token1,,,,) = adapter.getPositionMeta(loan.tokenId);
+        uint160 sqrtPriceX96 = adapter.getPoolSqrtPriceX96(loan.tokenId);
+        (amount0, amount1) = adapter.getAmountsForValuation(loan.tokenId, sqrtPriceX96);
+
+        uint256 valueUsd = oracle.getPositionValueUsd(loan.version, loan.tokenId);
+        estimatedUsdc = oracle.convertUsdToDebtAsset(address(usdc), valueUsd);
+
+        uint256 thresholdDebt = oracle.convertUsdToDebtAsset(
+            address(usdc), (valueUsd * liquidationThresholdBpsOf(loan.pairId)) / 10_000
+        );
+        liquidatable = debt > thresholdDebt;
+        shortfall = estimatedUsdc >= debt ? 0 : debt - estimatedUsdc;
+    }
+
     /// @notice First active loan below liquidation threshold (CRE / keepers scan this).
+    function findFirstLiquidatableLoan()
+        external
+        view
+        returns (bool found, uint256 loanId)
+    {
+        uint256 end = nextLoanId;
+        for (uint256 i = 1; i < end; i++) {
+            if (isLiquidatable(i)) return (true, i);
+        }
+        return (false, 0);
+    }
+
     /// @notice Liquidate an underwater loan. Only owner or an authorized liquidator (CRE receiver).
+    function liquidate(uint256 loanId) external nonReentrant {
+        if (msg.sender != owner() && !authorizedLiquidators[msg.sender]) {
+            revert NotLiquidationAuthority();
+        }
+        _liquidate(loanId);
+    }
+
     // -------------------------------------------------------------------------
     // LENDER — supply to a specific pair pool
     // -------------------------------------------------------------------------
@@ -736,6 +800,108 @@ contract MarketLendingModule is
         if (address(a) == address(0)) revert AdapterMissing();
     }
 
+    function _liquidate(uint256 loanId) internal {
+        Loan storage loan = loans[loanId];
+        if (!loan.active) revert LoanInactive(loanId);
+
+        _accrue(loanId);
+
+        uint256 debt = loan.principal + loan.accruedInterest;
+        if (debt == 0) revert StillHealthy(loanId);
+
+        uint256 valueUsd = oracle.getPositionValueUsd(loan.version, loan.tokenId);
+        uint256 thresholdDebt = oracle.convertUsdToDebtAsset(
+            address(usdc), (valueUsd * liquidationThresholdBpsOf(loan.pairId)) / 10_000
+        );
+        if (debt <= thresholdDebt) revert StillHealthy(loanId);
+
+        address borrower = loan.borrower;
+        LendingTypes.ProtocolVersion version = loan.version;
+        uint256 tokenId = loan.tokenId;
+        bytes32 pairId = loan.pairId;
+        uint256 principalDue = loan.principal;
+        uint256 interestDue = loan.accruedInterest;
+
+        uint256 usdcBefore = usdc.balanceOf(address(this));
+
+        IPositionAdapter adapter = _adapter(version);
+        (address token0, address token1, uint256 amount0, uint256 amount1, uint24 fee) =
+            adapter.unwind(tokenId, address(this), borrower);
+
+        _swapToUsdc(token0, amount0, fee);
+        _swapToUsdc(token1, amount1, fee);
+
+        uint256 usdcRecovered = usdc.balanceOf(address(this)) - usdcBefore;
+
+        uint256 repayAmount = usdcRecovered > debt ? debt : usdcRecovered;
+        uint256 interestPaid = repayAmount > interestDue ? interestDue : repayAmount;
+        uint256 principalPaid = repayAmount - interestPaid;
+        if (principalPaid > principalDue) principalPaid = principalDue;
+
+        Pool storage p = pools[pairId];
+        if (interestPaid > 0) p.totalAccruedInterest -= interestPaid;
+        if (interestDue > interestPaid) p.totalAccruedInterest -= (interestDue - interestPaid);
+        if (principalPaid > 0) p.totalPrincipal -= principalPaid;
+        if (principalDue > principalPaid) p.totalPrincipal -= (principalDue - principalPaid);
+        _pushToVault(pairId, repayAmount);
+
+        uint256 surplus = usdcRecovered > debt ? usdcRecovered - debt : 0;
+        uint256 shortfall = debt > usdcRecovered ? debt - usdcRecovered : 0;
+        uint256 protocolFee = (surplus * liquidationFeeBps) / 10_000;
+        uint256 borrowerSurplus = surplus - protocolFee;
+        if (protocolFee > 0) usdc.safeTransfer(feeTo, protocolFee);
+        if (borrowerSurplus > 0) usdc.safeTransfer(borrower, borrowerSurplus);
+
+        loan.principal = 0;
+        loan.accruedInterest = 0;
+        loan.active = false;
+        loanIdByPosition[uint8(version)][tokenId] = 0;
+
+        emit Liquidated(
+            loanId, msg.sender, borrower, usdcRecovered, repayAmount, borrowerSurplus, shortfall, protocolFee
+        );
+    }
+
     /// @dev Convert a token balance to USDC. Identity if already USDC; otherwise swap via V3 router.
     ///      Tries the LP fee first, then standard V3 tiers. V4 fees (e.g. 20) are not V3 pools.
+    function _swapToUsdc(address token, uint256 amount, uint24 fee) internal returns (uint256 usdcOut) {
+        if (amount == 0) return 0;
+        if (token == address(usdc)) return amount;
+
+        if (address(swapRouter) == address(0)) revert SwapRouterNotSet();
+
+        uint256 valueUsd = _tokenAmountToUsd(token, amount);
+        uint256 estimatedUsdc = oracle.convertUsdToDebtAsset(address(usdc), valueUsd);
+        uint256 minOut = (estimatedUsdc * (10_000 - liquidationSlippageBps)) / 10_000;
+
+        IERC20(token).forceApprove(address(swapRouter), amount);
+
+        uint24[5] memory fees = [fee, uint24(500), uint24(3000), uint24(10_000), uint24(100)];
+        for (uint256 i = 0; i < fees.length; i++) {
+            if (i > 0 && fees[i] == fee) continue;
+            try swapRouter.exactInputSingle(
+                ISwapRouter.ExactInputSingleParams({
+                    tokenIn: token,
+                    tokenOut: address(usdc),
+                    fee: fees[i],
+                    recipient: address(this),
+                    amountIn: amount,
+                    amountOutMinimum: minOut,
+                    sqrtPriceLimitX96: 0
+                })
+            ) returns (uint256 out) {
+                IERC20(token).forceApprove(address(swapRouter), 0);
+                return out;
+            } catch {}
+        }
+
+        IERC20(token).forceApprove(address(swapRouter), 0);
+        revert SwapFailed(token, amount);
+    }
+
+    function _tokenAmountToUsd(address token, uint256 amount) internal view returns (uint256) {
+        uint256 priceUsd = oracle.getTokenPriceUsd(token);
+        uint8 dec = IERC20Metadata(token).decimals();
+        return (amount * priceUsd) / (10 ** uint256(dec));
+    }
 }

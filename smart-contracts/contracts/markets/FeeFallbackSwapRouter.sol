@@ -40,7 +40,8 @@ contract FeeFallbackSwapRouter is ISwapRouter {
             sqrtPriceLimitX96: params.sqrtPriceLimitX96
         });
 
-        uint24[3] memory fees = [params.fee, uint24(500), uint24(3000)];
+        uint24[5] memory fees =
+            [params.fee, uint24(500), uint24(3000), uint24(10_000), uint24(100)];
 
         for (uint256 i = 0; i < fees.length; i++) {
             if (i > 0 && fees[i] == params.fee) continue;
