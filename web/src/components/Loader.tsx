@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 
 export function Spinner({ size = 16 }: { size?: number }) {
   return (
@@ -8,4 +9,29 @@ export function Spinner({ size = 16 }: { size?: number }) {
       aria-label="Loading"
     />
   );
+}
+
+export function LoadingText({ label = "Loading…" }: { label?: string }) {
+  return (
+    <span className="loading-inline">
+      <Spinner size={12} />
+      {label}
+    </span>
+  );
+}
+
+/** Show spinner while loading; otherwise render children / fallback. */
+export function MaybeLoading({
+  loading,
+  children,
+  fallback = "—",
+}: {
+  loading: boolean;
+  children: ReactNode;
+  fallback?: ReactNode;
+}) {
+  if (loading) return <LoadingText />;
+  if (children == null) return <>{fallback}</>;
+  
+  return <>{children}</>;
 }
