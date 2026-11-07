@@ -365,6 +365,3 @@ Canonical file: [Sepolia markets deployment](smart-contracts/deployments/sepolia
 | PairVault USDC/USDT | `0x9cf1CF796147DD6c4Ff2f57E91F67fe14397d8eF` |
 | PairVault USDC/WBTC | `0xE374DEF41E1c63d54FFeB7B4a3fbA554574A4F84` |
 
-## License
-
-See repository license file if present; otherwise all rights reserved by the project owners unless otherwise stated.
