@@ -4,8 +4,6 @@
 
 **What we use from Uniswap:** AMM **v3** (NonfungiblePositionManager, Factory, Pool) · AMM **v4** (PositionManager, StateView) · **SwapRouter02** for liquidation swaps. Not used: Uniswap SDK, Trading API, CCA, or custom v4 hooks.
 
-**Uniswap Foundation (ETHGlobal Mumbai):** see [`FEEDBACK.md`](./FEEDBACK.md) and submit the [Uniswap Developer Feedback Form](https://developers.uniswap.org/hackathon-feedback) with that file’s URL. Reviewer map below.
-
 ## Uniswap integration (reviewer map)
 
 | Piece | Path | What to look at |
