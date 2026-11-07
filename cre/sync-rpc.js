@@ -43,6 +43,11 @@ staging-settings:
   rpcs:
     - chain-name: ethereum-testnet-sepolia
       url: ${url}
+
+production-settings:
+  rpcs:
+    - chain-name: ethereum-testnet-sepolia
+      url: ${url}
 `;
 
 fs.writeFileSync(file, yaml);

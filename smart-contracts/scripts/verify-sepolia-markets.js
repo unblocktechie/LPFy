@@ -1,12 +1,8 @@
 /**
  * Verify all contracts from deployments/sepolia-markets.json on Etherscan.
  *
- * Covers: BorrowRateConfig, ValuationOracle, StaticApySource, V3/V4 adapters,
- * MarketLendingModule, PairVaults, CreLiquidationReceiver, FeeFallbackSwapRouter.
- *
  * Usage (from smart-contracts/):
  *   npx hardhat run scripts/verify-sepolia-markets.js --network sepolia
- *   npm run verify:sepolia
  *
  * Requires ETHERSCAN_API_KEY in smart-contracts/.env
  *
@@ -178,24 +174,6 @@ async function main() {
       address: c.creLiquidationReceiver,
       constructorArguments: [owner, forwarder, market],
     });
-  }
-
-  // FeeFallbackSwapRouter(inner) — inner is SwapRouter02 (immutable)
-  if (c.feeFallbackSwapRouter) {
-    const feeRouter = await hre.ethers.getContractAt(
-      "FeeFallbackSwapRouter",
-      c.feeFallbackSwapRouter
-    );
-    const inner = await feeRouter.inner();
-    targets.push({
-      name: "FeeFallbackSwapRouter",
-      address: c.feeFallbackSwapRouter,
-      constructorArguments: [inner],
-    });
-  } else if (x.swapRouter02 || x.swapRouter02Live) {
-    console.warn(
-      "No feeFallbackSwapRouter in deployment JSON — skipping (legacy deploy?)."
-    );
   }
 
   console.log(`\nVerifying ${targets.length} contract(s)…`);

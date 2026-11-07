@@ -4,12 +4,14 @@ import {
   encodeFunctionData,
   zeroAddress,
   type Address,
+  type Hex,
 } from 'viem'
 import {
   bytesToHex,
   encodeCallMsg,
   EVMClient,
   LATEST_BLOCK_NUMBER,
+  prepareReportRequest,
   type Runtime,
 } from '@chainlink/cre-sdk'
 
@@ -82,5 +84,22 @@ export class CreLiquidationReceiver {
     }) as readonly [boolean, bigint]
 
     return { upkeepNeeded: decoded[0], loanId: decoded[1] }
+  }
+
+  /** Writes abi-encoded report bytes to onReport via KeystoneForwarder. */
+  writeReport(
+    runtime: Runtime<unknown>,
+    callData: Hex,
+    gasConfig?: { gasLimit?: string },
+  ) {
+    const reportResponse = runtime.report(prepareReportRequest(callData)).result()
+
+    return this.client
+      .writeReport(runtime, {
+        receiver: this.address,
+        report: reportResponse,
+        gasConfig,
+      })
+      .result()
   }
 }

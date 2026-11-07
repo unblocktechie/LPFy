@@ -3,11 +3,13 @@
  * Pattern: https://github.com/smartcontractkit/cre-templates/.../keeper-bot-ts
  */
 import {
+  bytesToHex,
   cre,
   getNetwork,
+  TxStatus,
   type Runtime,
 } from '@chainlink/cre-sdk'
-import { type Address } from 'viem'
+import { type Address, encodeAbiParameters, parseAbiParameters } from 'viem'
 import { z } from 'zod'
 import { CreLiquidationReceiver } from './contracts/CreLiquidationReceiver'
 
@@ -50,8 +52,35 @@ export const onCronTrigger = (runtime: Runtime<Config>): string => {
     return 'Skipped — no upkeep needed'
   }
 
-  runtime.log(`Liquidatable loan #${loanId.toString()} detected.`)
-  return `Liquidatable loan ${loanId.toString()}`
+  // Payload decoded by CreLiquidationReceiver.onReport → market.liquidate(loanId)
+  const reportData = encodeAbiParameters(parseAbiParameters('uint256 loanId'), [
+    loanId,
+  ])
+
+  // Liquidation (unwind + swaps) needs ~600k+; Forwarder verification also costs gas.
+  // Default sim gas is too tight → ReportProcessed(false) while outer tx still "succeeds".
+  const writeResult = receiver.writeReport(runtime, reportData, {
+    gasLimit: '3500000',
+  })
+
+  if (writeResult.txStatus !== TxStatus.SUCCESS) {
+    throw new Error(
+      `Liquidation TX failed: ${writeResult.errorMessage || writeResult.txStatus}`,
+    )
+  }
+
+  if (
+    writeResult.receiverContractExecutionStatus !== undefined &&
+    writeResult.receiverContractExecutionStatus !== 0
+  ) {
+    throw new Error(
+      `Receiver execution failed: status ${writeResult.receiverContractExecutionStatus} (liquidate reverted — often swap/gas). Check ReportProcessed.result on explorer.`,
+    )
+  }
+
+  const txHash = bytesToHex(writeResult.txHash || new Uint8Array(32))
+  runtime.log(`Liquidated loan #${loanId.toString()}. TX: ${txHash}`)
+  return `Liquidated loan ${loanId.toString()} — tx: ${txHash}`
 }
 
 export function initWorkflow(config: Config) {
